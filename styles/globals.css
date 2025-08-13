@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens via CSS variables for easy theming */
+:root {
+  /* Light mode */
+  --background: 0 0% 100%; /* white */
+  --foreground: 222.2 47.4% 11.2%; /* near-black */
+  --muted: 210 40% 98%; /* light gray */
+  --muted-foreground: 215.4 16.3% 46.9%; /* medium gray */
+  --border: 214.3 31.8% 91.4%; /* light border */
+
+  /* Accent defaults to neon green */
+  --accent: 152 78% 55%; /* hsl(152,78%,55%) */
+  --accent-foreground: 0 0% 0%;
+}
+
+/* Dark mode colors */
+.dark {
+  --background: 222.2 84% 4.9%; /* very dark blue */
+  --foreground: 210 40% 98%; /* off-white */
+  --muted: 217.2 32.6% 17.5%; /* dark gray */
+  --muted-foreground: 215 20.2% 65.1%; /* light gray */
+  --border: 217.2 32.6% 17.5%; /* dark border */
+  
+  --accent: 152 78% 55%; /* keep accent green */
+  --accent-foreground: 210 40% 2%; /* very dark for accent text */
+}
+
+html, body, #__next { height: 100%; }
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  @apply antialiased;
+}
+
+/* Utility classes bound to variables */
+.bg-accent { background-color: hsl(var(--accent)); }
+.text-accent { color: hsl(var(--accent)); }
+.ring-accent { --tw-ring-color: hsl(var(--accent)); }
+.border-accent { border-color: hsl(var(--accent)); }
+.bg-muted { background-color: hsl(var(--muted)); }
+.text-muted-foreground { color: hsl(var(--muted-foreground)); }
+.border-default { border-color: hsl(var(--border)); }
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
+}
