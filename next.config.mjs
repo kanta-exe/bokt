@@ -2,7 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   env: {
-    DATABASE_URL: "file:./prisma/dev.db",
     NEXTAUTH_SECRET: "a-very-long-and-secure-secret-key-for-development-only-change-in-production",
     // Removed hardcoded NEXTAUTH_URL to allow dynamic port detection
   },
@@ -13,6 +12,10 @@ const nextConfig = {
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: '**.supabase.co' },
     ],
+  },
+  // Increase file upload limits
+  experimental: {
+    serverComponentsExternalPackages: ['formidable'],
   },
   // Removed deprecated experimental.appDir option
 };

@@ -1,18 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient, Role, ModelCategory, Gender } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
+import { Role, ModelCategory, Gender } from "@/generated/prisma";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import { uploadBufferToSupabase } from "@/lib/supabase-storage";
+import { IncomingForm } from "formidable";
 
 // Configure API route for larger file uploads
 export const config = {
   api: {
     bodyParser: false, // Disable default body parser since we're using formidable
-    responseLimit: false,
+    responseLimit: '100mb', // Increase file size limits to 100MB
   },
 };
-
-const prisma = new PrismaClient();
 
 const applicationSchema = z.object({
   // Basic Info
@@ -58,12 +58,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Parse FormData
     const formData = await new Promise<{ [key: string]: any }>((resolve, reject) => {
-      const form = new (require('formidable').IncomingForm)();
+      const form = new IncomingForm();
       
-      // Configure file size limits
-      form.maxFileSize = 10 * 1024 * 1024; // 10MB per file
-      form.maxFields = 20; // Maximum number of fields
-      form.allowEmptyFiles = false;
+      // Configure file size limits (formidable v3 has different API)
       
       form.parse(req, (err: any, fields: any, files: any) => {
         if (err) reject(err);
@@ -155,10 +152,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Personal details
           age: validatedData.age,
           
-          // Professional details
-          experience: "", // No longer stored in modelProfile
-          specialSkills: "", // No longer stored in modelProfile
-          certifications: "", // No longer stored in modelProfile
+          // Professional details - these fields don't exist in the schema
         },
       });
 
@@ -180,7 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             console.log(`📁 Uploading to Supabase: ${fileName}`);
             
             // Read the file as buffer and upload to Supabase
-            const fs = require('fs');
+            const fs = await import('fs');
             const fileBuffer = fs.readFileSync(photo.filepath);
             
             // Upload to Supabase Storage

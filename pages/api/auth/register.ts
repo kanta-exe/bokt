@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { PrismaClient, Role } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
+import { Role } from "@/generated/prisma";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-
-const prisma = new PrismaClient();
 
 const schema = z.object({
   email: z.string().email(),

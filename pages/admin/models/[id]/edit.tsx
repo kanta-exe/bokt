@@ -245,9 +245,6 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       categories: modelProfile.categories ? JSON.parse(modelProfile.categories) : [],
       modelingExperience: modelProfile.modelingExperience || '',
       bio: modelProfile.bio || '',
-      experience: modelProfile.experience || '',
-      specialSkills: modelProfile.specialSkills || '',
-      certifications: modelProfile.certifications || '',
       
       photos: modelProfile.photos.map(photo => photo.url),
       available: modelProfile.available,

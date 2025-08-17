@@ -1,12 +1,10 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import type { NextApiRequest, NextApiResponse } from "next";
-
-const prisma = new PrismaClient();
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -73,9 +71,14 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         console.log('✅ JWT updated with user role:', token.role);
       } else if (token?.sub) {
-        const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
-        token.role = dbUser?.role ?? "MODEL";
-        console.log('🔄 JWT refreshed from DB - role:', token.role);
+        try {
+          const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
+          token.role = dbUser?.role ?? "MODEL";
+          console.log('🔄 JWT refreshed from DB - role:', token.role);
+        } catch (error) {
+          console.error('❌ Error fetching user from DB:', error);
+          token.role = "MODEL";
+        }
       }
       return token;
     },

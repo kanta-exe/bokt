@@ -128,11 +128,11 @@ export default function ModelApplication() {
     if (!files) return;
     
     const fileArray = Array.from(files);
-    const maxSize = 10 * 1024 * 1024; // 10MB limit per file
+    const maxSize = 100 * 1024 * 1024; // 100MB limit per file
     const validFiles = fileArray.filter(file => file.size <= maxSize);
     
     if (validFiles.length !== fileArray.length) {
-      setError("Some photos were too large. Maximum file size is 10MB per photo.");
+      setError("Some photos were too large. Maximum file size is 100MB per photo.");
       return;
     }
     
@@ -149,12 +149,12 @@ export default function ModelApplication() {
       return;
     }
 
-    // Check total file size (max 50MB for all photos combined)
+    // Check total file size (max 100MB for all photos combined)
     const totalSize = form.photos.reduce((total, file) => total + file.size, 0);
-    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const maxTotalSize = 100 * 1024 * 1024; // 100MB total
     
     if (totalSize > maxTotalSize) {
-      setError(`Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is 50MB.`);
+      setError(`Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is 100MB.`);
       return;
     }
 
@@ -208,7 +208,7 @@ export default function ModelApplication() {
         let errorMessage = "Failed to submit application. Please try again.";
         
         if (res.status === 413) {
-          errorMessage = "Photos are too large. Please reduce photo sizes (max 5MB each) and try again.";
+          errorMessage = "Photos are too large. Please reduce photo sizes (max 100MB each) and try again.";
         } else {
           try {
             const errorData = await res.json();
@@ -488,7 +488,7 @@ export default function ModelApplication() {
                     required
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Upload 3-6 photos. Maximum 10MB per photo. Total size should not exceed 50MB.
+                    Upload 3-6 photos. Maximum 100MB per photo. Total size should not exceed 100MB.
                   </p>
                   {form.photos.length > 0 && (
                     <div className="mt-2">
@@ -588,11 +588,20 @@ export default function ModelApplication() {
               ) : (
                 <button
                   type="submit"
-                  disabled={!isFormComplete()}
-                  onClick={() => console.log('Submit button clicked')}
-                  className="ml-auto rounded-md bg-accent px-4 py-2 text-sm font-semibold text-black hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={!isFormComplete() || loading}
+                  className="ml-auto rounded-md bg-accent px-4 py-2 text-sm font-semibold text-black hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Submit Application
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Application'
+                  )}
                 </button>
               )}
             </div>
