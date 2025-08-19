@@ -16,7 +16,7 @@ export default function Home({ featured, results }: Props) {
       <section className="container-page py-14 sm:py-20">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground">Book Your Talent Now</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Discover and book fashion models directly. Fast, transparent, and photo-first.
+          Discover and book fashion models. Fast, direct, and transparent.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/models" className="rounded-md bg-accent px-5 py-3 font-semibold text-black hover:bg-accent/90 transition-colors">Browse talents</Link>
@@ -105,6 +105,9 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ query }) =
     category: m.category ?? null,
     gender: m.gender ?? null,
     available: m.available ?? null,
+    heightCm: m.heightCm ?? null,
+    age: m.age ?? null,
+    instagramHandle: m.instagramHandle ?? null,
   });
 
   return { props: { featured: featuredRaw.map(map), results: resultsRaw.map(map) } };

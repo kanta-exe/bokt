@@ -221,6 +221,10 @@ export default function AdminModels({ models }: Props) {
                      </span>
                    </div>
                    <div className="flex justify-between">
+                     <span className="text-muted-foreground">Shoe Size:</span>
+                     <span className="text-foreground">{model.shoesSize || 'N/A'}</span>
+                   </div>
+                   <div className="flex justify-between">
                      <span className="text-muted-foreground">Experience:</span>
                      <span className="text-foreground">{model.modelingExperience}</span>
                    </div>

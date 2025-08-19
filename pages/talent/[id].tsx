@@ -22,7 +22,13 @@ type Model = {
   hair?: string | null;
   shirtSize?: string | null;
   pantSize?: string | null;
+  shoesSize?: string | null;
   birthDate?: string | null;
+  age?: number | null;
+  instagramHandle?: string | null;
+  modelingExperience?: string | null;
+  categories?: string | null;
+  bio?: string | null;
   photos: Photo[];
 };
 
@@ -69,13 +75,17 @@ export default function TalentProfile({ model }: { model: Model }) {
         {age !== undefined && <Detail label="Age" value={`${age}`} />}
         <Detail label="Height" value={model.heightCm ? `${model.heightCm} cm` : undefined} />
         <Detail label="Eyes" value={model.eyes ?? undefined} />
-        <Detail label="Chest" value={model.bustCm ? `${model.bustCm} cm"` : undefined} />
+        <Detail label="Hair" value={model.hair ?? undefined} />
+        <Detail label="Chest" value={model.bustCm ? `${model.bustCm} cm` : undefined} />
         <Detail label="Waist" value={model.waistCm ? `${model.waistCm} cm` : undefined} />
         <Detail label="Hips" value={model.hipsCm ? `${model.hipsCm} cm` : undefined} />
-        <Detail label="Shoe" value={model.shoeEu ? `EU ${model.shoeEu}` : undefined} />
+        <Detail label="Shoe EU" value={model.shoeEu ? `EU ${model.shoeEu}` : undefined} />
+        <Detail label="Shoe Size" value={model.shoesSize ?? undefined} />
         <Detail label="Shirt" value={model.shirtSize ?? undefined} />
         <Detail label="Pants" value={model.pantSize ?? undefined} />
       </div>
+
+
 
       {/* Accessible booking modal */}
       {showBookingModal && (
@@ -445,7 +455,13 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     hair: data.hair,
     shirtSize: data.shirtSize,
     pantSize: data.pantSize,
+    shoesSize: data.shoesSize,
     birthDate: data.birthDate ? new Date(data.birthDate).toISOString() : null,
+    age: data.age,
+    instagramHandle: data.instagramHandle,
+    modelingExperience: data.modelingExperience,
+    categories: data.categories,
+    bio: data.bio,
     photos: (data.photos || []).map((p: any) => ({ id: p.id, url: p.url, caption: p.caption ?? null })),
   };
 

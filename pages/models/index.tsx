@@ -2,7 +2,16 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import type { GetServerSideProps } from "next";
 
-type ModelCard = { id: string; displayName: string; avatarUrl: string | null; city: string | null };
+type ModelCard = { 
+  id: string; 
+  displayName: string; 
+  avatarUrl: string | null; 
+  city: string | null;
+  category: string | null;
+  gender: string | null;
+  heightCm: number | null;
+  age: number | null;
+};
 
 export default function ModelsPage({ models }: { models: ModelCard[] }) {
   return (
@@ -40,9 +49,15 @@ export default function ModelsPage({ models }: { models: ModelCard[] }) {
                 </div>
               )}
             </div>
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">{m.displayName}</span>
-              {m.city && <span className="text-muted-foreground">{m.city}</span>}
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium text-foreground">{m.displayName}</span>
+                {m.city && <span className="text-muted-foreground">{m.city}</span>}
+              </div>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{[m.category, m.gender].filter(Boolean).join(' • ')}</span>
+                <span>{[m.heightCm ? `${m.heightCm}cm` : null, m.age ? `${m.age}y` : null].filter(Boolean).join(' • ')}</span>
+              </div>
             </div>
           </Link>
         ))}
@@ -63,7 +78,16 @@ export const getServerSideProps: GetServerSideProps = async () => {
     }),
     [] as any[]
   );
-  const mapped: ModelCard[] = models.map((m: any) => ({ id: m.id, displayName: m.displayName, avatarUrl: m.avatarUrl || m.photos?.[0]?.url || null, city: m.location }));
+  const mapped: ModelCard[] = models.map((m: any) => ({ 
+    id: m.id, 
+    displayName: m.displayName, 
+    avatarUrl: m.avatarUrl || m.photos?.[0]?.url || null, 
+    city: m.location,
+    category: m.category,
+    gender: m.gender,
+    heightCm: m.heightCm,
+    age: m.age
+  }));
   return { props: { models: mapped } };
 };
 

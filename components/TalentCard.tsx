@@ -16,6 +16,9 @@ export type Talent = {
   category?: string | null;
   gender?: string | null;
   available?: boolean | null;
+  heightCm?: number | null;
+  age?: number | null;
+  instagramHandle?: string | null;
 };
 
 export default function TalentCard({ talent }: { talent: Talent }) {
@@ -36,6 +39,9 @@ export default function TalentCard({ talent }: { talent: Talent }) {
           <div className="font-semibold leading-none text-foreground">{talent.displayName}</div>
           <div className="mt-1 text-xs text-muted-foreground">
             {[talent.category, talent.gender].filter(Boolean).join(" • ")}
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            {[talent.heightCm ? `${talent.heightCm}cm` : null, talent.age ? `${talent.age}y` : null].filter(Boolean).join(" • ")}
           </div>
         </div>
         {talent.available !== false && (
