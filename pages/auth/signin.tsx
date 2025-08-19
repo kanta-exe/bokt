@@ -3,14 +3,16 @@ import { GetServerSideProps } from "next";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { InputField } from "@/components/FormField";
+import { useFormValidation } from "@/lib/form-validation";
 
 export default function SignIn({ csrfToken }: { csrfToken: string }) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { validator, clearErrors, setFieldError, getFieldError } = useFormValidation();
 
   // If already authenticated, redirect immediately
   if (status === "authenticated" && session?.user) {
@@ -41,10 +43,34 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
     );
   }
 
+  const validateForm = () => {
+    clearErrors();
+    let isValid = true;
+
+    if (!email.trim()) {
+      setFieldError('email', 'Email is required');
+      isValid = false;
+    } else if (!validator.validateEmail(email)) {
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      setFieldError('password', 'Password is required');
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setIsLoading(true);
+    clearErrors();
+    
+    if (!validateForm()) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       console.log('🔐 Attempting sign in for:', email);
@@ -52,7 +78,14 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
       
       if (res?.error) {
         console.log('❌ Sign in error:', res.error);
-        setError("Invalid email or password");
+        // Try to map the error to specific fields
+        if (res.error.toLowerCase().includes('email') || res.error.toLowerCase().includes('user')) {
+          setFieldError('email', 'Invalid email address');
+        } else if (res.error.toLowerCase().includes('password')) {
+          setFieldError('password', 'Invalid password');
+        } else {
+          setFieldError('general', 'Invalid email or password');
+        }
       } else {
         console.log('✅ Sign in successful, redirecting...');
         // Force a page reload to trigger the authenticated state
@@ -60,7 +93,7 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
       }
     } catch (err) {
       console.error('💥 Sign in exception:', err);
-      setError("An error occurred during sign in");
+      setFieldError('general', 'An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
@@ -86,31 +119,43 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
         onSubmit={handleSubmit}
       >
         <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
-        <div>
-          <label className="block text-sm font-medium">Email</label>
-          <input 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
-            type="email" 
-            required 
-            className="mt-1 w-full rounded-md border px-3 py-2" 
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium">Password</label>
-          <input 
-            value={password} 
-            onChange={(e) => setPassword(e.target.value)} 
-            type="password" 
-            required 
-            className="mt-1 w-full rounded-md border px-3 py-2" 
-          />
-        </div>
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        
+        <InputField
+          label="Email"
+          name="email"
+          type="email"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            validator.clearFieldError('email');
+          }}
+          error={getFieldError('email')}
+          required
+        />
+        
+        <InputField
+          label="Password"
+          name="password"
+          type="password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            validator.clearFieldError('password');
+          }}
+          error={getFieldError('password')}
+          required
+        />
+        
+        {getFieldError('general') && (
+          <p className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+            {getFieldError('general')}
+          </p>
+        )}
+        
         <button 
           type="submit" 
           disabled={isLoading}
-          className="rounded-md bg-accent px-4 py-2 font-semibold text-black disabled:opacity-50"
+          className="rounded-md bg-accent px-4 py-2 font-semibold text-black disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? "Signing in..." : "Sign in"}
         </button>

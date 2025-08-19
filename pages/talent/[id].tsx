@@ -2,6 +2,8 @@ import type { GetServerSideProps } from "next";
 import { prisma } from "@/lib/prisma";
 import { useState } from "react";
 import { useRouter } from "next/router";
+import { InputField, SelectField, TextAreaField } from "@/components/FormField";
+import { useFormValidation } from "@/lib/form-validation";
 
 type Photo = { id: string; url: string; caption?: string | null };
 type Model = {
@@ -112,8 +114,8 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const [brandInstagram, setBrandInstagram] = useState("");
   const [email, setEmail] = useState("");
   const [whatsApp, setWhatsApp] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const { validator, clearErrors, setFieldError, getFieldError } = useFormValidation();
 
   const getMinBudget = () => duration === "HALF_DAY" ? 2000 : 3000;
 
@@ -130,34 +132,39 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const validateBudget = () => {
     const budgetValue = getBudgetValue();
     if (budgetValue === 0) {
-      setError("Please enter a budget amount");
+      setFieldError('budget', 'Please enter a budget amount');
       return false;
     }
     const minBudget = getMinBudget();
     if (budgetValue < minBudget) {
-      setError(`Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP`);
+      setFieldError('budget', `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP`);
       return false;
     }
     return true;
   };
 
   const validateForm = () => {
+    clearErrors();
+    let isValid = true;
+
     if (!name.trim()) {
-      setError("Please enter your name");
-      return false;
+      setFieldError('name', 'Please enter your name');
+      isValid = false;
     }
     if (!phone.trim()) {
-      setError("Please enter your phone number");
-      return false;
+      setFieldError('phone', 'Please enter your phone number');
+      isValid = false;
+    } else if (!validator.validatePhone(phone)) {
+      isValid = false;
     }
     if (!date) {
-      setError("Please select a date and time");
-      return false;
+      setFieldError('date', 'Please select a date and time');
+      isValid = false;
     }
     if (!validateBudget()) {
-      return false;
+      isValid = false;
     }
-    return true;
+    return isValid;
   };
 
   const getBudgetValue = () => {
@@ -169,7 +176,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    clearErrors();
     setStatus(null);
 
     if (!validateForm()) {
@@ -219,10 +226,23 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
         router.push(successUrl);
       } else {
         const data = await response.json();
-        setError(data.error || "Failed to send booking request");
+        const errorMessage = data.error || "Failed to send booking request";
+        
+        // Try to map server errors to specific fields
+        if (errorMessage.toLowerCase().includes('budget')) {
+          setFieldError('budget', errorMessage);
+        } else if (errorMessage.toLowerCase().includes('date')) {
+          setFieldError('date', errorMessage);
+        } else if (errorMessage.toLowerCase().includes('phone')) {
+          setFieldError('phone', errorMessage);
+        } else if (errorMessage.toLowerCase().includes('name')) {
+          setFieldError('name', errorMessage);
+        } else {
+          setFieldError('general', errorMessage);
+        }
       }
     } catch (err) {
-      setError("Network error. Please try again.");
+      setFieldError('general', "Network error. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -250,54 +270,116 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">Half-day min 2K EGP, full/multiple days min 3K EGP.</p>
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <label className="block text-sm text-foreground text-foreground">Your name
-            <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" required />
-          </label>
-          <label className="block text-sm text-foreground">Phone
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" required />
-          </label>
-          <label className="block text-sm text-foreground sm:col-span-2">Brand
-            <input value={brand} onChange={(e) => setBrand(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" />
-          </label>
-          <label className="block text-sm text-foreground">Website
-            <input value={brandWebsite} onChange={(e) => setBrandWebsite(e.target.value)} placeholder="https://..." className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" />
-          </label>
-          <label className="block text-sm text-foreground">Instagram
-            <input value={brandInstagram} onChange={(e) => setBrandInstagram(e.target.value)} placeholder="@brand" className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" />
-          </label>
-          <label className="block text-sm text-foreground">Email
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" />
-          </label>
-          <label className="block text-sm text-foreground">Date & time
-            <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" required />
-          </label>
-          <label className="block text-sm text-foreground">Duration
-            <select
-              value={duration}
-              onChange={(e) => {
-                const v = e.target.value;
-                setDuration(v);
-                // Don't pre-fill budget, let user enter it
-              }}
-              className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground"
-            >
-              <option value="HALF_DAY">Half day</option>
-              <option value="FULL_DAY">Full day</option>
-            </select>
-          </label>
-          <label className="block text-sm text-foreground">Budget (EGP)
-            <input type="number" min={getMinBudget()} value={budget}
-              onChange={handleBudgetChange}
-              placeholder={`Min ${getMinBudget().toLocaleString()} EGP`}
-              className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" />
-          </label>
+          <InputField
+            label="Your name"
+            name="name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              validator.clearFieldError('name');
+            }}
+            error={getFieldError('name')}
+            required
+          />
+          
+          <InputField
+            label="Phone"
+            name="phone"
+            value={phone}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              validator.clearFieldError('phone');
+            }}
+            error={getFieldError('phone')}
+            required
+          />
+          
+          <InputField
+            label="Brand"
+            name="brand"
+            value={brand}
+            onChange={(e) => setBrand(e.target.value)}
+            className="sm:col-span-2"
+          />
+          
+          <InputField
+            label="Website"
+            name="brandWebsite"
+            value={brandWebsite}
+            onChange={(e) => setBrandWebsite(e.target.value)}
+            placeholder="https://..."
+          />
+          
+          <InputField
+            label="Instagram"
+            name="brandInstagram"
+            value={brandInstagram}
+            onChange={(e) => setBrandInstagram(e.target.value)}
+            placeholder="@brand"
+          />
+          
+          <InputField
+            label="Email"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          
+          <InputField
+            label="Date & time"
+            name="date"
+            type="datetime-local"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+              validator.clearFieldError('date');
+            }}
+            error={getFieldError('date')}
+            required
+          />
+          
+          <SelectField
+            label="Duration"
+            name="duration"
+            value={duration}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDuration(v);
+              // Don't pre-fill budget, let user enter it
+            }}
+          >
+            <option value="HALF_DAY">Half day</option>
+            <option value="FULL_DAY">Full day</option>
+          </SelectField>
+          
+          <InputField
+            label="Budget (EGP)"
+            name="budget"
+            type="number"
+            value={budget}
+            onChange={(e) => {
+              handleBudgetChange(e);
+              validator.clearFieldError('budget');
+            }}
+            min={getMinBudget()}
+            placeholder={`Min ${getMinBudget().toLocaleString()} EGP`}
+            error={getFieldError('budget')}
+          />
+          
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input type="checkbox" checked={whatsApp} onChange={(e) => setWhatsApp(e.target.checked)} className="h-4 w-4" />
             Prefer WhatsApp updates
           </label>
-          <label className="block text-sm text-foreground sm:col-span-2">Notes
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} className="mt-1 w-full rounded-md border-border bg-muted text-foreground px-3 py-2 focus:bg-background focus:border-accent placeholder:text-muted-foreground" rows={3} />
-          </label>
+          
+          <TextAreaField
+            label="Notes"
+            name="note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={3}
+            className="sm:col-span-2"
+          />
           {/* Live summary */}
           <div className="mt-6 rounded-lg border border-border bg-muted p-4 text-sm">
           <div className="font-semibold text-foreground">Summary</div>
@@ -313,7 +395,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           </div>
         </div>
         </div>
-        {error && <div className="px-6 pt-2 text-sm text-red-600">{error}</div>}
+        {getFieldError('general') && <div className="px-6 pt-2 text-sm text-red-600 bg-red-50 p-3 rounded-md">{getFieldError('general')}</div>}
         {status && <div className="px-6 pt-2 text-sm text-green-700">{status}</div>}
         <div className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-border bg-background p-4">
           <button type="button" onClick={onClose} className="rounded-md border border-border bg-muted text-foreground px-4 py-2 hover:bg-background transition-colors" disabled={isSubmitting}>Cancel</button>
