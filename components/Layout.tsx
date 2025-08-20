@@ -32,16 +32,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </>
             )}
           </div>
-          <button className="md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Toggle Menu">
-            <span className="i">☰</span>
+          <button className="md:hidden p-2 -m-2" onClick={() => setOpen((v) => !v)} aria-label="Toggle Menu">
+            <span className="text-xl">☰</span>
           </button>
         </div>
         {open && (
           <div className="md:hidden border-t border-border bg-background">
             <div className="container-page flex flex-col py-2">
-              <Link href="/models" className="py-3 text-lg font-semibold text-foreground hover:text-accent" onClick={() => setOpen(false)}>Models</Link>
-              <Link href="/auth/model-application" className="py-3 text-lg font-semibold text-foreground hover:text-accent" onClick={() => setOpen(false)}>Apply</Link>
-              <Link href="/how-it-works" className="py-3 text-lg font-semibold text-foreground hover:text-accent" onClick={() => setOpen(false)}>How it works</Link>
+              <Link href="/models" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>Models</Link>
+              <Link href="/auth/model-application" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>Apply</Link>
+              <Link href="/how-it-works" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>How it works</Link>
               <div className="flex items-center gap-3 mt-2">
                 <ThemeToggle />
                 {!isLoading && session && (session.user as any)?.role === 'ADMIN' && (

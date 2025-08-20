@@ -631,6 +631,7 @@ export default function ModelApplication() {
                       <div className="mt-2 grid grid-cols-3 gap-2">
                         {form.photos.map((file, index) => (
                           <div key={index} className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={URL.createObjectURL(file)}
                               alt={`Photo ${index + 1}`}

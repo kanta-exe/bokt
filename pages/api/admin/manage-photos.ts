@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const formidable = require('formidable');
       const form = formidable({});
       
-      const [fields, files] = await new Promise((resolve, reject) => {
+      const [fields, files] = await new Promise<[any, any]>((resolve, reject) => {
         form.parse(req, (err: any, fields: any, files: any) => {
           if (err) reject(err);
           resolve([fields, files]);

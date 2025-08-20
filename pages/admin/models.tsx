@@ -160,6 +160,7 @@ export default function AdminModels({ models }: Props) {
               <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                 {model.photos && model.photos.length > 0 ? (
                   <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={model.photos[0]}
                       alt={model.name}

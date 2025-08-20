@@ -47,17 +47,16 @@ export const authOptions: NextAuthOptions = {
         }
         console.log('✅ User found:', user.email, 'Role:', user.role);
         
-        // allow passwordless dev accounts (seeded brand/admin) but validate if hash exists
-        if (user.passwordHash) {
-          console.log('🔑 Checking password hash...');
-          const isValid = await bcrypt.compare(password, user.passwordHash);
-          console.log('🔑 Password valid:', isValid);
-          if (!isValid) return null;
-        } else {
-          console.log('🔓 No password hash, checking for non-empty password');
-          // require any non-empty password in dev to proceed
-          if (!password) return null;
+        // Always require valid password authentication
+        if (!user.passwordHash) {
+          console.log('❌ User has no password hash - cannot authenticate');
+          return null;
         }
+        
+        console.log('🔑 Checking password hash...');
+        const isValid = await bcrypt.compare(password, user.passwordHash);
+        console.log('🔑 Password valid:', isValid);
+        if (!isValid) return null;
         console.log('✅ Authentication successful for:', user.email);
         return { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role } as any;
       },

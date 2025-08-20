@@ -573,6 +573,7 @@ export default function EditModel({ model }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {model.photos.map((photo, index) => (
                 <div key={index} className="relative group overflow-hidden rounded-lg shadow-md transition-all duration-200 hover:shadow-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={photo}
                     alt={`Photo ${index + 1}`}

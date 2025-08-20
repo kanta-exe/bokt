@@ -1,10 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  env: {
-    NEXTAUTH_SECRET: "a-very-long-and-secure-secret-key-for-development-only-change-in-production",
-    // Removed hardcoded NEXTAUTH_URL to allow dynamic port detection
-  },
+  // Environment variables should be set in Vercel dashboard, not hardcoded
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.unsplash.com' },

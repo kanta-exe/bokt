@@ -55,6 +55,7 @@ export default function TalentProfile({ model }: { model: Model }) {
               }`}
             >
               {/* Main Image */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img 
                 src={photo.url} 
                 alt={photo.caption ?? `${model.displayName} - Photo ${index + 1}`}

@@ -35,12 +35,12 @@ export default function TalentCard({ talent }: { talent: Talent }) {
         </div>
       </Link>
       <div className="mt-3 flex items-start justify-between gap-2">
-        <div>
-          <div className="font-semibold leading-none text-foreground">{talent.displayName}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
+        <div className="flex-1 min-w-0">
+          <div className="font-semibold leading-none text-foreground text-sm sm:text-base truncate">{talent.displayName}</div>
+          <div className="mt-1 text-xs text-muted-foreground truncate">
             {[talent.category, talent.gender].filter(Boolean).join(" • ")}
           </div>
-          <div className="mt-1 text-xs text-muted-foreground">
+          <div className="mt-1 text-xs text-muted-foreground truncate">
             {[talent.heightCm ? `${talent.heightCm}cm` : null, talent.age ? `${talent.age}y` : null].filter(Boolean).join(" • ")}
           </div>
         </div>
@@ -49,9 +49,9 @@ export default function TalentCard({ talent }: { talent: Talent }) {
         )}
       </div>
       <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-        <span>{talent.location ?? ""}</span>
-        <Link href={`/talent/${talent.id}`} className="text-accent underline underline-offset-2 hover:no-underline transition-all">
-          View Profile
+        <span className="truncate flex-1 mr-2">{talent.location ?? ""}</span>
+        <Link href={`/talent/${talent.id}`} className="text-accent underline underline-offset-2 hover:no-underline transition-all px-2 py-1 -m-1 rounded min-w-[44px] text-center">
+          View
         </Link>
       </div>
     </div>

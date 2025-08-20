@@ -18,15 +18,15 @@ export default function Home({ featured, results }: Props) {
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
           Discover and book fashion models. Fast, direct, and transparent.
         </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/models" className="rounded-md bg-accent px-5 py-3 font-semibold text-black hover:bg-accent/90 transition-colors">Browse talents</Link>
-          <Link href="/auth/model-application" className="rounded-md border border-accent px-5 py-3 font-semibold text-foreground hover:bg-accent hover:text-black transition-colors">Join as a talent</Link>
+        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+          <Link href="/models" className="rounded-md bg-accent px-6 py-4 font-semibold text-black hover:bg-accent/90 transition-colors text-center min-h-[44px] flex items-center justify-center">Browse talents</Link>
+          <Link href="/auth/model-application" className="rounded-md border border-accent px-6 py-4 font-semibold text-foreground hover:bg-accent hover:text-black transition-colors text-center min-h-[44px] flex items-center justify-center">Join as a talent</Link>
         </div>
       </section>
 
 
       {/* 3-step explainer */}
-      <section className="container-page grid gap-6 py-10 sm:grid-cols-3">
+      <section className="container-page grid gap-6 py-10 grid-cols-1 sm:grid-cols-3">
         {[
           { title: "Find", desc: "Filter by category, location, and size to discover the right talent." },
           { title: "Book", desc: "Request availability and confirm bookings directly." },
@@ -45,7 +45,7 @@ export default function Home({ featured, results }: Props) {
           <h2 className="text-xl font-semibold text-foreground">Talents</h2>
           <div className="text-sm text-muted-foreground">{results?.length || 0} results</div>
         </div>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {results?.map((t) => (
             <TalentCard key={t.id} talent={t} />
           )) || []}

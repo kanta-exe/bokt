@@ -210,6 +210,7 @@ export default function AdminPage({ pending }: { pending: PendingModel[] }) {
                         {selectedModel.photos.map((photo, index) => (
                           <div key={index} className="relative group">
                             {/* Try to show actual photo first */}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img 
                               src={photo} 
                               alt={`Photo ${index + 1}`}
