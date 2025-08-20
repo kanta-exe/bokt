@@ -118,7 +118,7 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
         className="max-w-md space-y-4"
         onSubmit={handleSubmit}
       >
-        <input name="csrfToken" type="hidden" defaultValue={csrfToken} />
+        {csrfToken && <input name="csrfToken" type="hidden" defaultValue={csrfToken} />}
         
         <InputField
           label="Email"
@@ -169,8 +169,13 @@ export default function SignIn({ csrfToken }: { csrfToken: string }) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const csrfToken = await getCsrfToken(context);
-  return { props: { csrfToken } };
+  try {
+    const csrfToken = await getCsrfToken(context);
+    return { props: { csrfToken: csrfToken || null } };
+  } catch (error) {
+    console.error('Error getting CSRF token:', error);
+    return { props: { csrfToken: null } };
+  }
 };
 
 
