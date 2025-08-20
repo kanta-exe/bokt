@@ -44,20 +44,40 @@ export default function TalentProfile({ model }: { model: Model }) {
 
   return (
     <div className="container-page py-10">
-      {/* Photo-first gallery */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="md:col-span-2">
-          {model.photos[0] && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={model.photos[0].url} alt={model.photos[0].caption ?? model.displayName} className="aspect-[3/4] w-full rounded-lg object-cover" />
-          )}
-        </div>
-        <div className="grid grid-cols-3 gap-3 md:grid-cols-1">
-          {model.photos.slice(1, 7).map((p) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={p.id} src={p.url} alt={p.caption ?? model.displayName} className="aspect-[3/4] w-full rounded-md object-cover" />
+      {/* Professional Photo Gallery */}
+      <div className="mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {model.photos.map((photo, index) => (
+            <div 
+              key={photo.id} 
+              className={`relative group overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
+                index === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
+              }`}
+            >
+              {/* Main Image */}
+              <img 
+                src={photo.url} 
+                alt={photo.caption ?? `${model.displayName} - Photo ${index + 1}`}
+                className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                  index === 0 ? 'aspect-[4/5]' : 'aspect-[3/4]'
+                }`}
+                loading={index < 4 ? "eager" : "lazy"}
+              />
+              
+              {/* Overlay on hover */}
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
+              
+              {/* Photo number badge */}
+              <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm">
+                {index + 1}
+              </div>
+              
+              
+            </div>
           ))}
         </div>
+        
+
       </div>
 
       {/* Header & CTA */}
@@ -82,7 +102,7 @@ export default function TalentProfile({ model }: { model: Model }) {
         <Detail label="Shoe EU" value={model.shoeEu ? `EU ${model.shoeEu}` : undefined} />
         <Detail label="Shoe Size" value={model.shoesSize ?? undefined} />
         <Detail label="Shirt" value={model.shirtSize ?? undefined} />
-        <Detail label="Pants" value={model.pantSize ?? undefined} />
+        <Detail label="Pants (EU)" value={model.pantSize ?? undefined} />
       </div>
 
 
@@ -165,6 +185,20 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       setFieldError('phone', 'Please enter your phone number');
       isValid = false;
     } else if (!validator.validatePhone(phone)) {
+      isValid = false;
+    }
+    if (!brand.trim()) {
+      setFieldError('brand', 'Please enter your brand name');
+      isValid = false;
+    }
+    if (!brandInstagram.trim()) {
+      setFieldError('brandInstagram', 'Please enter your brand Instagram');
+      isValid = false;
+    }
+    if (!email.trim()) {
+      setFieldError('email', 'Please enter your email');
+      isValid = false;
+    } else if (!validator.validateEmail(email)) {
       isValid = false;
     }
     if (!date) {
@@ -304,13 +338,18 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             required
           />
           
-          <InputField
-            label="Brand"
-            name="brand"
-            value={brand}
-            onChange={(e) => setBrand(e.target.value)}
-            className="sm:col-span-2"
-          />
+                     <InputField
+             label="Brand"
+             name="brand"
+             value={brand}
+             onChange={(e) => {
+               setBrand(e.target.value);
+               validator.clearFieldError('brand');
+             }}
+             error={getFieldError('brand')}
+             required
+             className="sm:col-span-2"
+           />
           
           <InputField
             label="Website"
@@ -320,21 +359,31 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             placeholder="https://..."
           />
           
-          <InputField
-            label="Instagram"
-            name="brandInstagram"
-            value={brandInstagram}
-            onChange={(e) => setBrandInstagram(e.target.value)}
-            placeholder="@brand"
-          />
+                     <InputField
+             label="Instagram"
+             name="brandInstagram"
+             value={brandInstagram}
+             onChange={(e) => {
+               setBrandInstagram(e.target.value);
+               validator.clearFieldError('brandInstagram');
+             }}
+             error={getFieldError('brandInstagram')}
+             required
+             placeholder="@brand"
+           />
           
-          <InputField
-            label="Email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+                     <InputField
+             label="Email"
+             name="email"
+             type="email"
+             value={email}
+             onChange={(e) => {
+               setEmail(e.target.value);
+               validator.clearFieldError('email');
+             }}
+             error={getFieldError('email')}
+             required
+           />
           
           <InputField
             label="Date & time"

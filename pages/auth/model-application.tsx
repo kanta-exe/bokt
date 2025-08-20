@@ -152,11 +152,11 @@ export default function ModelApplication() {
           setFieldError('modelingExperience', 'Modeling experience is required');
           isValid = false;
         }
-        if (form.photos.length < 3) {
-          setFieldError('photos', 'Please upload at least 3 photos');
+        if (form.photos.length < 5) {
+          setFieldError('photos', 'Please upload exactly 5 photos');
           isValid = false;
-        } else if (form.photos.length > 6) {
-          setFieldError('photos', 'Please upload no more than 6 photos');
+        } else if (form.photos.length > 5) {
+          setFieldError('photos', 'Please upload exactly 5 photos');
           isValid = false;
         }
         break;
@@ -214,7 +214,7 @@ export default function ModelApplication() {
       form.shoesSize &&
       form.categories.length > 0 && 
       form.modelingExperience && 
-      form.photos.length >= 3 &&
+             form.photos.length === 5 &&
       form.termsAccepted
     );
     console.log('Form completion check:', { complete, form });
@@ -457,27 +457,27 @@ export default function ModelApplication() {
                 />
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField
-                    label="Chest/Bust (cm)"
-                    name="bustCm"
-                    type="number"
-                    value={form.bustCm || ""}
-                    onChange={(e) => updateForm({ bustCm: parseInt(e.target.value) || 0 })}
-                    placeholder="e.g., 85"
-                    min={50}
-                    max={150}
-                  />
+                                     <InputField
+                     label="Chest/Bust (cm) (optional)"
+                     name="bustCm"
+                     type="number"
+                     value={form.bustCm || ""}
+                     onChange={(e) => updateForm({ bustCm: parseInt(e.target.value) || 0 })}
+                     placeholder="e.g., 85"
+                     min={50}
+                     max={150}
+                   />
                   
-                  <InputField
-                    label="Waist (cm)"
-                    name="waistCm"
-                    type="number"
-                    value={form.waistCm || ""}
-                    onChange={(e) => updateForm({ waistCm: parseInt(e.target.value) || 0 })}
-                    placeholder="e.g., 70"
-                    min={50}
-                    max={150}
-                  />
+                                     <InputField
+                     label="Waist (cm) (optional)"
+                     name="waistCm"
+                     type="number"
+                     value={form.waistCm || ""}
+                     onChange={(e) => updateForm({ waistCm: parseInt(e.target.value) || 0 })}
+                     placeholder="e.g., 70"
+                     min={50}
+                     max={150}
+                   />
                 </div>
                 
                 <SelectField
@@ -498,7 +498,7 @@ export default function ModelApplication() {
                 </SelectField>
                 
                 <SelectField
-                  label="Pant Size"
+                  label="Pant Size (EU)"
                   name="pantSize"
                   value={form.pantSize}
                   onChange={(e) => updateForm({ pantSize: e.target.value })}
@@ -506,12 +506,19 @@ export default function ModelApplication() {
                   required
                 >
                   <option value="">Select Pant Size</option>
-                  <option value="XS">XS</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
+                  <option value="26">26</option>
+                  <option value="28">28</option>
+                  <option value="30">30</option>
+                  <option value="32">32</option>
+                  <option value="34">34</option>
+                  <option value="36">36</option>
+                  <option value="38">38</option>
+                  <option value="40">40</option>
+                  <option value="42">42</option>
+                  <option value="44">44</option>
+                  <option value="46">46</option>
+                  <option value="48">48</option>
+                  <option value="50">50</option>
                 </SelectField>
                 
                 <SelectField
@@ -585,12 +592,25 @@ export default function ModelApplication() {
                 </SelectField>
                 
                 <div>
-                  <label className="block text-sm font-medium text-foreground">
-                    Photos * (Upload 3-6 photos)
-                  </label>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    Please upload 3-6 high-quality photos of yourself
-                  </p>
+                                     <label className="block text-sm font-medium text-foreground">
+                     Photos * (Upload exactly 5 photos)
+                   </label>
+                   <p className="text-xs text-muted-foreground mb-2">
+                     Upload exactly 5 photos (doesn't have to be polaroids)
+                   </p>
+                                     <div className="mb-3 p-4 bg-gradient-to-r from-red-50 to-orange-50 border border-red-200 rounded-lg shadow-sm">
+                     <div className="flex items-center gap-3">
+                       <div className="flex-shrink-0">
+                         <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                         </svg>
+                       </div>
+                       <div>
+                         <p className="text-sm font-semibold text-red-800">NO SELFIES</p>
+                         <p className="text-xs text-red-700 mt-0.5">Selfies automatically "cancels" your application.</p>
+                       </div>
+                     </div>
+                   </div>
                   <input
                     type="file"
                     multiple
@@ -599,9 +619,9 @@ export default function ModelApplication() {
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Upload 3-6 photos. Maximum 100MB per photo. Total size should not exceed 100MB.
-                  </p>
+                                     <p className="mt-1 text-xs text-muted-foreground">
+                     Max 100 MB
+                   </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
                   )}

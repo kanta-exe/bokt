@@ -157,16 +157,27 @@ export default function AdminModels({ models }: Props) {
           {modelList.map((model) => (
             <div key={model.id} className="bg-white rounded-lg border shadow-sm overflow-hidden">
               {/* Model Photo */}
-              <div className="aspect-[3/4] bg-muted relative">
+              <div className="aspect-[3/4] bg-muted relative overflow-hidden">
                 {model.photos && model.photos.length > 0 ? (
-                  <img
-                    src={model.photos[0]}
-                    alt={model.name}
-                    className="w-full h-full object-cover"
-                  />
+                  <>
+                    <img
+                      src={model.photos[0]}
+                      alt={model.name}
+                      className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
+                    />
+                    {/* Photo count badge */}
+                    {model.photos.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        +{model.photos.length - 1}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    No Photo
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">📸</div>
+                      <div className="text-sm">No Photo</div>
+                    </div>
                   </div>
                 )}
                                  <div className="absolute top-2 right-2 flex flex-col gap-1">
@@ -219,6 +230,10 @@ export default function AdminModels({ models }: Props) {
                      <span className="text-foreground">
                        {model.bustCm > 0 ? `${model.bustCm}-${model.waistCm}` : 'N/A'}
                      </span>
+                   </div>
+                   <div className="flex justify-between">
+                     <span className="text-muted-foreground">Pant Size:</span>
+                     <span className="text-foreground">{model.pantSize || 'N/A'}</span>
                    </div>
                    <div className="flex justify-between">
                      <span className="text-muted-foreground">Shoe Size:</span>

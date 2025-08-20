@@ -42,7 +42,7 @@ const applicationSchema = z.object({
   bio: z.string().optional(),
   
   // Photos
-  photos: z.array(z.any()).min(3).max(6),
+  photos: z.array(z.any()).min(5).max(5),
   
   // Terms
   termsAccepted: z.boolean().refine(val => val === true, {

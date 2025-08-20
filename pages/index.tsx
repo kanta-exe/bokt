@@ -24,11 +24,6 @@ export default function Home({ featured, results }: Props) {
         </div>
       </section>
 
-      {/* New talents slider */}
-      <section className="container-page py-8">
-        <h2 className="mb-4 text-xl font-semibold text-foreground">New talents</h2>
-        <FeaturedSlider items={featured} />
-      </section>
 
       {/* 3-step explainer */}
       <section className="container-page grid gap-6 py-10 sm:grid-cols-3">

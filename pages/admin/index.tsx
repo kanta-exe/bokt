@@ -176,7 +176,7 @@ export default function AdminPage({ pending }: { pending: PendingModel[] }) {
                     <p className="text-foreground">{selectedModel.shirtSize}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Pant Size</label>
+                    <label className="text-sm font-medium text-muted-foreground">Pant Size (EU)</label>
                     <p className="text-foreground">{selectedModel.pantSize}</p>
                   </div>
                   <div>
