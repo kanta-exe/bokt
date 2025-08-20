@@ -5,6 +5,18 @@ const PrismaClient = client.PrismaClient || client.default || client;
 const prisma = new PrismaClient();
 
 async function main() {
+  // Create admin user
+  const admin = await prisma.user.upsert({
+    where: { email: "bokt@dev.com" },
+    update: {},
+    create: { 
+      email: "bokt@dev.com", 
+      name: "Admin User", 
+      role: "ADMIN",
+      passwordHash: await require("bcrypt").hash("admin1234", 10)
+    },
+  });
+
   const user = await prisma.user.upsert({
     where: { email: "brand@example.com" },
     update: {},
@@ -40,6 +52,7 @@ async function main() {
     include: { photos: true },
   });
 
+  console.log("Seeded admin:", admin.email, "Role:", admin.role);
   console.log("Seeded model:", model.displayName, model.id);
   console.log("Login brand user email:", user.email);
 }

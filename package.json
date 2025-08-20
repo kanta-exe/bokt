@@ -9,6 +9,7 @@
     "lint": "next lint",
     "prisma:generate": "cross-env prisma generate",
     "prisma:migrate": "cross-env prisma migrate dev",
+
     "prisma:studio": "cross-env prisma studio"
   },
   "dependencies": {
