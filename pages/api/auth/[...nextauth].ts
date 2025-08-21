@@ -23,6 +23,8 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
   },
+  // Force cache refresh by adding a version
+  secret: process.env.NEXTAUTH_SECRET + "_v2",
   providers: [
     Credentials({
       name: "Email & Password",
@@ -102,6 +104,11 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   } else {
     process.env.NEXTAUTH_URL = 'https://bokt.vercel.app';
   }
+  
+  // Add cache-busting headers to prevent browser caching
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   
   return NextAuth(req, res, authOptions);
 }
