@@ -225,7 +225,7 @@ export default function ModelApplication() {
     if (!files) return;
     
     const fileArray = Array.from(files);
-    const maxSize = 10 * 1024 * 1024; // 10MB limit per file
+    const maxSize = 100 * 1024 * 1024; // 100MB limit per file
     
     // Validate file count
     if (form.photos.length + fileArray.length > 5) {
@@ -246,20 +246,20 @@ export default function ModelApplication() {
     let hasErrors = false;
     fileArray.forEach((file, index) => {
       if (file.size > maxSize) {
-        setFieldError('photos', `Photo ${index + 1} is too large. Maximum file size is 10MB per photo.`);
+                 setFieldError('photos', `Photo ${index + 1} is too large. Maximum file size is 100MB per photo.`);
         hasErrors = true;
       }
     });
     
     if (hasErrors) return;
 
-    // Validate total size (max 50MB total)
+    // Validate total size (max 500MB total)
     const currentTotalSize = form.photos.reduce((total, file) => total + file.size, 0);
     const newTotalSize = currentTotalSize + fileArray.reduce((total, file) => total + file.size, 0);
-    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const maxTotalSize = 500 * 1024 * 1024; // 500MB total
     
     if (newTotalSize > maxTotalSize) {
-      setFieldError('photos', `Total photo size would exceed 50MB limit. Please select smaller photos.`);
+      setFieldError('photos', `Total photo size would exceed 500MB limit. Please select smaller photos.`);
       return;
     }
     
@@ -275,12 +275,12 @@ export default function ModelApplication() {
       return;
     }
 
-    // Check total file size (max 50MB for all photos combined)
+    // Check total file size (max 500MB for all photos combined)
     const totalSize = form.photos.reduce((total, file) => total + file.size, 0);
-    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+    const maxTotalSize = 500 * 1024 * 1024; // 500MB total
     
     if (totalSize > maxTotalSize) {
-      setFieldError('photos', `Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is 50MB.`);
+      setFieldError('photos', `Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is 500MB.`);
       return;
     }
 
@@ -333,8 +333,8 @@ export default function ModelApplication() {
       } else {
         let errorMessage = "Failed to submit application. Please try again.";
         
-        if (res.status === 413) {
-          setFieldError('photos', 'Photos are too large. Please reduce photo sizes (max 10MB per photo, 50MB total) and try again.');
+                 if (res.status === 413) {
+           setFieldError('photos', 'Photos are too large. Please reduce photo sizes (max 100MB per photo, 500MB total) and try again.');
         } else if (res.status === 502 || res.status === 503) {
           setFieldError('general', 'Server is temporarily unavailable. Please try again in a few minutes.');
         } else {
@@ -647,7 +647,7 @@ export default function ModelApplication() {
                     required
                   />
                                      <p className="mt-1 text-xs text-muted-foreground">
-                     Max 10 MB per photo, 50 MB total
+                     Max 100 MB per photo, 500 MB total
                    </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>

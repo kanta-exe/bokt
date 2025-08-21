@@ -11,7 +11,7 @@ export const config = {
   api: {
     bodyParser: false, // Disable default body parser since we're using formidable
     responseLimit: false, // Remove response limit
-    maxDuration: 60, // Increase timeout to 60 seconds
+    maxDuration: 300, // Increase timeout to 5 minutes for large uploads
   },
 };
 
