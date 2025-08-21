@@ -1,23 +1,11 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
-import { z } from "zod";
-import type { NextApiRequest, NextApiResponse } from "next";
 
-const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+export default NextAuth({
   session: { 
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-  jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -30,21 +18,26 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(raw) {
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) return null;
+        
         try {
-          const parse = credentialsSchema.safeParse(raw);
-          if (!parse.success) return null;
+          const user = await prisma.user.findUnique({ 
+            where: { email: credentials.email } 
+          });
           
-          const { email, password } = parse.data;
-          const user = await prisma.user.findUnique({ where: { email } });
           if (!user || !user.passwordHash) return null;
           
-          const isValid = await bcrypt.compare(password, user.passwordHash);
+          const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
           if (!isValid) return null;
           
-          return { id: user.id, email: user.email, name: user.name, role: user.role } as any;
+          return { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name, 
+            role: user.role 
+          };
         } catch (error) {
-          console.error('Auth error:', error);
           return null;
         }
       },
@@ -55,13 +48,6 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = (user as any).role;
         token.id = user.id;
-      } else if (token?.sub) {
-        try {
-          const dbUser = await prisma.user.findUnique({ where: { id: token.sub } });
-          token.role = dbUser?.role ?? "MODEL";
-        } catch (error) {
-          token.role = "MODEL";
-        }
       }
       return token;
     },
@@ -73,8 +59,6 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-};
-
-export default NextAuth(authOptions);
+});
 
 
