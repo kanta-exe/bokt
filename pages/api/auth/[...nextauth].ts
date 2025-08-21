@@ -96,13 +96,11 @@ export const authOptions: NextAuthOptions = {
 
 // Custom handler to dynamically set the URL
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  // Dynamically set NEXTAUTH_URL based on the request
+  // Force the correct NEXTAUTH_URL based on environment
   if (process.env.NODE_ENV === 'development') {
-    const protocol = req.headers['x-forwarded-proto'] || 'http';
-    const host = req.headers.host;
-    if (host) {
-      process.env.NEXTAUTH_URL = `${protocol}://${host}`;
-    }
+    process.env.NEXTAUTH_URL = 'http://localhost:3000';
+  } else {
+    process.env.NEXTAUTH_URL = 'https://bokt.vercel.app';
   }
   
   return NextAuth(req, res, authOptions);
