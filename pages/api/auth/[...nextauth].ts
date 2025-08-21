@@ -1,10 +1,10 @@
 // VERSION: 2025-08-21-15-30 - Force Vercel deployment
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   session: { 
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -80,6 +80,6 @@ export default NextAuth({
       return session;
     },
   },
-});
+};
 
-
+export default NextAuth(authOptions);
