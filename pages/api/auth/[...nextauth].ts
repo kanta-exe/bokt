@@ -1,3 +1,4 @@
+// VERSION: 2025-08-21-15-30 - Force Vercel deployment
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
