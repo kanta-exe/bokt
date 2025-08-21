@@ -42,21 +42,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Link href="/models" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>Models</Link>
               <Link href="/auth/model-application" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>Apply</Link>
               <Link href="/how-it-works" className="py-4 text-lg font-semibold text-foreground hover:text-accent border-b border-border" onClick={() => setOpen(false)}>How it works</Link>
-              <div className="flex items-center gap-3 mt-2">
-                <ThemeToggle />
-                {!isLoading && session && (session.user as any)?.role === 'ADMIN' && (
-                  <>
-                    <Link href="/admin" className="text-sm text-accent hover:underline">Admin</Link>
-                    <button onClick={() => signOut({ callbackUrl: window.location.origin })} className="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-black hover:bg-accent/90">Sign out</button>
-                  </>
-                )}
-              </div>
+              {!isLoading && session && (session.user as any)?.role === 'ADMIN' && (
+                <div className="flex flex-col gap-2 mt-2 pt-2 border-t border-border">
+                  <Link href="/admin" className="text-sm text-accent hover:underline">Admin</Link>
+                  <button onClick={() => signOut({ callbackUrl: window.location.origin })} className="rounded-md bg-accent px-3 py-2 text-sm font-semibold text-black hover:bg-accent/90">Sign out</button>
+                </div>
+              )}
             </div>
           </div>
         )}
       </header>
 
       <main className="flex-1">{children}</main>
+
+      {/* Floating theme toggle for mobile */}
+      <div className="fixed bottom-4 right-4 z-50 md:hidden">
+        <ThemeToggle />
+      </div>
 
       <footer className="border-t border-border bg-background">
         <div className="container-page py-8 text-sm text-muted-foreground">

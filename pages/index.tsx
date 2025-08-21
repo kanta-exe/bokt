@@ -13,36 +13,44 @@ export default function Home({ featured, results }: Props) {
   return (
     <div>
       {/* Hero */}
-      <section className="container-page py-14 sm:py-20">
-        <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-foreground">Book Your Talent Now</h1>
-        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+      <section className="container-page py-8 sm:py-14 md:py-20 px-4 sm:px-6">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">
+          Book Your Talent Now
+        </h1>
+        <p className="mt-4 sm:mt-6 max-w-2xl text-base sm:text-lg text-muted-foreground leading-relaxed">
           Discover and book fashion models. Fast, direct, and transparent.
         </p>
-        <div className="mt-6 flex flex-col sm:flex-row gap-3">
-          <Link href="/models" className="rounded-md bg-accent px-6 py-4 font-semibold text-black hover:bg-accent/90 transition-colors text-center min-h-[44px] flex items-center justify-center">Browse talents</Link>
-          <Link href="/auth/model-application" className="rounded-md border border-accent px-6 py-4 font-semibold text-foreground hover:bg-accent hover:text-black transition-colors text-center min-h-[44px] flex items-center justify-center">Join as a talent</Link>
+        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <Link href="/models" className="rounded-lg bg-accent px-6 py-4 font-semibold text-black hover:bg-accent/90 transition-colors text-center min-h-[48px] flex items-center justify-center text-base">
+            Browse talents
+          </Link>
+          <Link href="/auth/model-application" className="rounded-lg border border-accent px-6 py-4 font-semibold text-foreground hover:bg-accent hover:text-black transition-colors text-center min-h-[48px] flex items-center justify-center text-base">
+            Join as a talent
+          </Link>
         </div>
       </section>
 
 
       {/* 3-step explainer */}
-      <section className="container-page grid gap-6 py-10 grid-cols-1 sm:grid-cols-3">
-        {[
-          { title: "Find", desc: "Filter by category, location, and size to discover the right talent." },
-          { title: "Book", desc: "Request availability and confirm bookings directly." },
-          { title: "Shoot", desc: "Show up and create. Payments and details handled transparently." },
-        ].map((s) => (
-          <div key={s.title} className="rounded-xl border bg-white p-6">
-            <div className="text-2xl font-bold text-accent">{s.title}</div>
-            <p className="mt-2 text-neutral-600">{s.desc}</p>
-      </div>
-        ))}
+      <section className="container-page px-4 sm:px-6">
+        <div className="grid gap-4 sm:gap-6 py-8 sm:py-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { title: "Find", desc: "Filter by category, location, and size to discover the right talent." },
+            { title: "Book", desc: "Request availability and confirm bookings directly." },
+            { title: "Shoot", desc: "Show up and create. Payments and details handled transparently." },
+          ].map((s) => (
+            <div key={s.title} className="rounded-xl border bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="text-xl sm:text-2xl font-bold text-accent mb-3">{s.title}</div>
+              <p className="text-sm sm:text-base text-neutral-600 leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Talent grid */}
-      <section className="container-page pb-16">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-foreground">Talents</h2>
+      <section className="container-page px-4 sm:px-6 pb-16">
+        <div className="mb-6 sm:mb-8 flex items-center justify-between">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground">Talents</h2>
           <div className="text-sm text-muted-foreground">{results?.length || 0} results</div>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
