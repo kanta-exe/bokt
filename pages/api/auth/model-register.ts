@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { prisma } from "@/lib/prisma";
 import { Role, ModelCategory, Gender } from "@/generated/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { uploadBufferToSupabase } from "@/lib/supabase-storage";
 import { IncomingForm } from "formidable";
