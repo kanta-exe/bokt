@@ -10,7 +10,8 @@ import { IncomingForm } from "formidable";
 export const config = {
   api: {
     bodyParser: false, // Disable default body parser since we're using formidable
-    responseLimit: '100mb', // Increase file size limits to 100MB
+    responseLimit: false, // Remove response limit
+    maxDuration: 60, // Increase timeout to 60 seconds
   },
 };
 
