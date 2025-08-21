@@ -66,16 +66,59 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log('🔄 JWT callback - token:', token.sub, 'user:', user?.email);
+      
       if (user) {
+        // Initial sign in - set user data
+        console.log('🔄 Setting user data in JWT:', user.email, 'Role:', (user as any).role);
         token.role = (user as any).role;
         token.id = user.id;
+        return token;
       }
+      
+      // Token refresh - verify user still exists and has correct role
+      if (token.sub) {
+        try {
+          console.log('🔄 Refreshing JWT - checking user in DB...');
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.sub as string },
+            select: { id: true, email: true, role: true, passwordHash: true }
+          });
+          
+          if (!dbUser) {
+            console.log('❌ User not found in DB during JWT refresh');
+            return { ...token, error: "User not found" };
+          }
+          
+          if (!dbUser.passwordHash) {
+            console.log('❌ User has no password hash during JWT refresh');
+            return { ...token, error: "Invalid user" };
+          }
+          
+          console.log('🔄 JWT refreshed from DB - role:', dbUser.role);
+          token.role = dbUser.role;
+          token.id = dbUser.id;
+          return token;
+        } catch (error) {
+          console.error('❌ Error fetching user from DB:', error);
+          return { ...token, error: "Database error" };
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
+      console.log('🔄 Session callback - token sub:', token.sub, 'role:', token.role);
+      
+      if (token.error) {
+        console.log('❌ Token has error:', token.error);
+        return session;
+      }
+      
       if (session.user) {
         (session.user as any).id = token.sub;
         (session.user as any).role = token.role;
+        console.log('✅ Session updated - user ID:', token.sub, 'role:', token.role);
       }
       return session;
     },
