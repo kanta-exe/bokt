@@ -23,8 +23,7 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
   },
-  // Force cache refresh by adding a version
-  secret: process.env.NEXTAUTH_SECRET + "_v2",
+
   providers: [
     Credentials({
       name: "Email & Password",
@@ -96,21 +95,6 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-// Custom handler to dynamically set the URL
-export default async function auth(req: NextApiRequest, res: NextApiResponse) {
-  // Force the correct NEXTAUTH_URL based on environment
-  if (process.env.NODE_ENV === 'development') {
-    process.env.NEXTAUTH_URL = 'http://localhost:3000';
-  } else {
-    process.env.NEXTAUTH_URL = 'https://bokt.vercel.app';
-  }
-  
-  // Add cache-busting headers to prevent browser caching
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  
-  return NextAuth(req, res, authOptions);
-}
+export default NextAuth(authOptions);
 
 
