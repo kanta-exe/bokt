@@ -8,6 +8,7 @@ const schema = z.object({
   modelId: z.string().min(1),
   startAt: z.string().datetime(),
   duration: z.enum(["HALF_DAY", "FULL_DAY"]),
+  shootSetting: z.string().optional(),
   shootLocation: z.string().optional(),
   note: z.string().optional(),
   requesterName: z.string().min(2),
@@ -43,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     console.log("📝 Received booking data:", JSON.stringify(req.body, null, 2));
     
-    const { modelId, startAt, duration, shootLocation, note, requesterName, requesterPhone, requesterBrand, requesterEmail, contactWhatsApp, brandWebsite, brandInstagram, offeredBudgetEgp } = schema.parse(req.body);
+    const { modelId, startAt, duration, shootSetting, shootLocation, note, requesterName, requesterPhone, requesterBrand, requesterEmail, contactWhatsApp, brandWebsite, brandInstagram, offeredBudgetEgp } = schema.parse(req.body);
     
     // Validate minimum budget
     const minBudget = duration === "HALF_DAY" ? 2500 : 3500;
@@ -58,6 +59,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         modelId,
         startAt: new Date(startAt),
         duration: duration as any,
+        shootSetting: shootSetting || undefined,
         shootLocation: shootLocation || undefined,
         note,
         requesterName,

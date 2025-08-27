@@ -137,6 +137,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const router = useRouter();
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [duration, setDuration] = useState("HALF_DAY");
+  const [shootSetting, setShootSetting] = useState("");
   const [shootLocation, setShootLocation] = useState("");
   const [note, setNote] = useState("");
   const [budget, setBudget] = useState<number | string>("");
@@ -208,6 +209,10 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       setFieldError('date', 'Please select a date and time');
       isValid = false;
     }
+    if (!shootSetting.trim()) {
+      setFieldError('shootSetting', 'Please select a shoot setting');
+      isValid = false;
+    }
     if (!shootLocation.trim()) {
       setFieldError('shootLocation', 'Please select a shoot location');
       isValid = false;
@@ -241,6 +246,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       modelId,
       startAt: new Date(date).toISOString(),
       duration,
+      shootSetting: shootSetting.trim() || undefined,
       shootLocation: shootLocation.trim() || undefined,
       note: note.trim() || undefined,
       requesterName: name.trim(),
@@ -272,6 +278,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           requesterName: name.trim(),
           startDate: date,
           duration: duration,
+          shootSetting: shootSetting,
           shootLocation: shootLocation,
           budget: getBudgetValue().toString(),
         }).toString()}`;
@@ -406,17 +413,21 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           />
           
           <SelectField
-            label="Duration"
-            name="duration"
-            value={duration}
-            onChange={(e) => {
-              const v = e.target.value;
-              setDuration(v);
-              // Don't pre-fill budget, let user enter it
-            }}
+            label="Shoot Setting"
+            name="shootSetting"
+            value={shootSetting}
+            onChange={(e) => setShootSetting(e.target.value)}
+            required
           >
-            <option value="HALF_DAY">Half day</option>
-            <option value="FULL_DAY">Full day</option>
+            <option value="">Select setting</option>
+            <option value="studio">Studio</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="indoor_location">Indoor Location</option>
+            <option value="hotel">Hotel</option>
+            <option value="beach">Beach</option>
+            <option value="urban">Urban/City</option>
+            <option value="nature">Nature</option>
+            <option value="other">Other</option>
           </SelectField>
           
           <SelectField
@@ -426,14 +437,35 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             onChange={(e) => setShootLocation(e.target.value)}
             required
           >
-            <option value="">Select location</option>
-            <option value="studio">Studio</option>
-            <option value="outdoor">Outdoor</option>
-            <option value="indoor_location">Indoor Location</option>
-            <option value="hotel">Hotel</option>
-            <option value="beach">Beach</option>
-            <option value="urban">Urban/City</option>
-            <option value="nature">Nature</option>
+            <option value="">Select</option>
+            <option value="cairo">Cairo</option>
+            <option value="alexandria">Alexandria</option>
+            <option value="giza">Giza</option>
+            <option value="qalyubia">Qalyubia</option>
+            <option value="sharqia">Sharqia</option>
+            <option value="ismailia">Ismailia</option>
+            <option value="port_said">Port Said</option>
+            <option value="suez">Suez</option>
+            <option value="damietta">Damietta</option>
+            <option value="gharbia">Gharbia</option>
+            <option value="kafr_el_sheikh">Kafr El Sheikh</option>
+            <option value="monufia">Monufia</option>
+            <option value="beheira">Beheira</option>
+            <option value="fayoum">Fayoum</option>
+            <option value="beni_suef">Beni Suef</option>
+            <option value="minya">Minya</option>
+            <option value="assiut">Assiut</option>
+            <option value="sohag">Sohag</option>
+            <option value="qena">Qena</option>
+            <option value="luxor">Luxor</option>
+            <option value="aswan">Aswan</option>
+            <option value="red_sea">Red Sea</option>
+            <option value="new_valley">New Valley</option>
+            <option value="matrouh">Matrouh</option>
+            <option value="north_sinai">North Sinai</option>
+            <option value="south_sinai">South Sinai</option>
+            <option value="north_coast">North Coast</option>
+            <option value="dahab">Dahab</option>
             <option value="other">Other</option>
           </SelectField>
           
@@ -449,6 +481,20 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             min={getMinBudget()}
             error={getFieldError('budget')}
           />
+          
+          <SelectField
+            label="Duration"
+            name="duration"
+            value={duration}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDuration(v);
+              // Don't pre-fill budget, let user enter it
+            }}
+          >
+            <option value="HALF_DAY">Half day</option>
+            <option value="FULL_DAY">Full day</option>
+          </SelectField>
           
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
             <input type="checkbox" checked={whatsApp} onChange={(e) => setWhatsApp(e.target.checked)} className="h-4 w-4" />
@@ -469,9 +515,10 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             <div><span className="text-muted-foreground">Talent:</span> <span className="text-foreground">{modelName}</span></div>
             <div><span className="text-muted-foreground">When:</span> <span className="text-foreground">{prettyDate()}</span></div>
-            <div><span className="text-muted-foreground">Duration:</span> <span className="text-foreground">{duration === 'HALF_DAY' ? 'Half day' : 'Full day'}</span></div>
+            <div><span className="text-muted-foreground">Setting:</span> <span className="text-foreground">{shootSetting || 'Not set'}</span></div>
             <div><span className="text-muted-foreground">Location:</span> <span className="text-foreground">{shootLocation || 'Not set'}</span></div>
             <div><span className="text-muted-foreground">Budget:</span> <span className="text-foreground">{budget ? `EGP ${typeof budget === 'number' ? budget.toLocaleString() : budget}` : 'Not set'}</span></div>
+            <div><span className="text-muted-foreground">Duration:</span> <span className="text-foreground">{duration === 'HALF_DAY' ? 'Half day' : 'Full day'}</span></div>
             {brand && <div><span className="text-muted-foreground">Brand:</span> <span className="text-foreground">{brand}</span></div>}
             {brandWebsite && <div><span className="text-muted-foreground">Website:</span> <span className="text-foreground">{brandWebsite}</span></div>}
             {brandInstagram && <div><span className="text-muted-foreground">Instagram:</span> <span className="text-foreground">{brandInstagram}</span></div>}
