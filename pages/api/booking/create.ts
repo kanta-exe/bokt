@@ -37,7 +37,7 @@ const schema = z.object({
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") return res.status(405).end();
   const session = await getServerSession(req, res, authOptions);
-  if (!session) return res.status(401).json({ error: "Unauthorized" });
+  // Authentication is optional for bookings - allow public bookings
   
   try {
     console.log("📝 Received booking data:", JSON.stringify(req.body, null, 2));
@@ -45,7 +45,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { modelId, startAt, duration, note, requesterName, requesterPhone, requesterBrand, requesterEmail, contactWhatsApp, brandWebsite, brandInstagram, offeredBudgetEgp } = schema.parse(req.body);
     
     // Validate minimum budget
-    const minBudget = duration === "HALF_DAY" ? 2000 : 3000;
+    const minBudget = duration === "HALF_DAY" ? 2500 : 3500;
     if (offeredBudgetEgp < minBudget) {
       return res.status(400).json({ 
         error: `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP` 
@@ -66,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         brandWebsite: brandWebsite || undefined,
         brandInstagram: brandInstagram || undefined,
         offeredBudgetEgp,
-        createdById: (session.user as any)?.id ?? undefined,
+        createdById: session?.user ? (session.user as any)?.id : undefined,
       },
     });
     

@@ -42,6 +42,7 @@ interface InputFieldProps {
   type?: string;
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClick?: () => void;
   error?: string;
   required?: boolean;
   placeholder?: string;
@@ -58,6 +59,7 @@ export function InputField({
   type = "text",
   value,
   onChange,
+  onClick,
   error,
   required = false,
   placeholder,
@@ -68,6 +70,7 @@ export function InputField({
   step
 }: InputFieldProps) {
   const baseInputClasses = "mt-1 block w-full rounded-md border bg-muted text-foreground shadow-sm focus:border-accent focus:ring-accent focus:bg-background placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed";
+  const clickableClasses = onClick ? "cursor-pointer" : "";
   const errorClasses = error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "border-border";
   
   return (
@@ -78,13 +81,14 @@ export function InputField({
         type={type}
         value={value}
         onChange={onChange}
+        onClick={onClick}
         placeholder={placeholder}
         required={required}
         disabled={disabled}
         min={min}
         max={max}
         step={step}
-        className={`${baseInputClasses} ${errorClasses}`}
+        className={`${baseInputClasses} ${errorClasses} ${clickableClasses}`}
         aria-describedby={error ? `${name}-error` : undefined}
         aria-invalid={error ? "true" : "false"}
       />

@@ -35,7 +35,7 @@ export default function Home({ featured, results }: Props) {
       <section className="container-page px-4 sm:px-6">
         <div className="grid gap-4 sm:gap-6 py-8 sm:py-12 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { title: "Find", desc: "Filter by category, location, and size to discover the right talent." },
+            { title: "Find", desc: "Explore our models and find the perfect match for your shoot." },
             { title: "Book", desc: "Request availability and confirm bookings directly." },
             { title: "Shoot", desc: "Show up and create. Payments and details handled transparently." },
           ].map((s) => (

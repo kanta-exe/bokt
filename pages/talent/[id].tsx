@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { InputField, SelectField, TextAreaField } from "@/components/FormField";
+import { DateTimePicker } from "@/components/DateTimePicker";
 import { useFormValidation } from "@/lib/form-validation";
 
 type Photo = { id: string; url: string; caption?: string | null };
@@ -148,7 +149,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const [status, setStatus] = useState<string | null>(null);
   const { validator, clearErrors, setFieldError, getFieldError } = useFormValidation();
 
-  const getMinBudget = () => duration === "HALF_DAY" ? 2000 : 3000;
+  const getMinBudget = () => duration === "HALF_DAY" ? 2500 : 3500;
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -313,7 +314,6 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
         <h2 className="text-2xl font-extrabold text-foreground">
           Book <span className="text-accent">{modelName}</span>
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">Half-day min 2K EGP, full/multiple days min 3K EGP.</p>
         <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
           <InputField
             label="Your name"
@@ -386,13 +386,12 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
              required
            />
           
-          <InputField
+          <DateTimePicker
             label="Date & time"
             name="date"
-            type="datetime-local"
             value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
+            onChange={(value) => {
+              setDate(value);
               validator.clearFieldError('date');
             }}
             error={getFieldError('date')}
@@ -423,7 +422,6 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
               validator.clearFieldError('budget');
             }}
             min={getMinBudget()}
-            placeholder={`Min ${getMinBudget().toLocaleString()} EGP`}
             error={getFieldError('budget')}
           />
           
