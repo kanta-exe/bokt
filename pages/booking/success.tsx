@@ -9,6 +9,9 @@ interface BookingSuccessProps {
   requesterName: string;
   startDate: string;
   duration: string;
+  selectedDays?: string;
+  shootSetting?: string;
+  shootLocation?: string;
   budget: number;
 }
 
@@ -18,6 +21,9 @@ export default function BookingSuccess({
   requesterName, 
   startDate, 
   duration, 
+  selectedDays,
+  shootSetting,
+  shootLocation,
   budget 
 }: BookingSuccessProps) {
   const router = useRouter();
@@ -63,12 +69,36 @@ export default function BookingSuccess({
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Duration:</span>
-              <span className="font-medium text-white">{duration.replace("_", " ")}</span>
+              <span className="font-medium text-white">
+                {duration === "MULTIPLE_DAYS" && selectedDays ? (
+                  `${selectedDays} day${parseInt(selectedDays) !== 1 ? 's' : ''}`
+                ) : (
+                  duration.replace("_", " ")
+                )}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-300">Budget:</span>
-              <span className="font-medium text-white">EGP {budget.toLocaleString()}</span>
+              <span className="font-medium text-white">
+                {duration === "MULTIPLE_DAYS" && selectedDays ? (
+                  `EGP ${budget.toLocaleString()}/day`
+                ) : (
+                  `EGP ${budget.toLocaleString()}`
+                )}
+              </span>
             </div>
+            {shootSetting && (
+              <div className="flex justify-between">
+                <span className="text-gray-300">Shoot Setting:</span>
+                <span className="font-medium text-white">{shootSetting.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+              </div>
+            )}
+            {shootLocation && (
+              <div className="flex justify-between">
+                <span className="text-gray-300">Location:</span>
+                <span className="font-medium text-white">{shootLocation.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -156,7 +186,7 @@ export default function BookingSuccess({
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { bookingId, modelName, requesterName, startDate, duration, budget } = context.query;
+  const { bookingId, modelName, requesterName, startDate, duration, selectedDays, shootSetting, shootLocation, budget } = context.query;
 
   if (!bookingId || !modelName || !requesterName || !startDate || !duration || !budget) {
     return {
@@ -174,6 +204,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
       requesterName: requesterName as string,
       startDate: startDate as string,
       duration: duration as string,
+      selectedDays: selectedDays as string | undefined,
+      shootSetting: shootSetting as string | undefined,
+      shootLocation: shootLocation as string | undefined,
       budget: parseInt(budget as string, 10),
     },
   };

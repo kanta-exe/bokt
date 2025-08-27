@@ -7,7 +7,8 @@ import { z } from "zod";
 const schema = z.object({
   modelId: z.string().min(1),
   startAt: z.string().datetime(),
-  duration: z.enum(["HALF_DAY", "FULL_DAY"]),
+  duration: z.enum(["HALF_DAY", "FULL_DAY", "MULTIPLE_DAYS"]),
+  selectedDays: z.array(z.string().datetime()).optional(),
   shootSetting: z.string().optional(),
   shootLocation: z.string().optional(),
   note: z.string().optional(),
@@ -44,14 +45,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     console.log("📝 Received booking data:", JSON.stringify(req.body, null, 2));
     
-    const { modelId, startAt, duration, shootSetting, shootLocation, note, requesterName, requesterPhone, requesterBrand, requesterEmail, contactWhatsApp, brandWebsite, brandInstagram, offeredBudgetEgp } = schema.parse(req.body);
+    const { modelId, startAt, duration, selectedDays, shootSetting, shootLocation, note, requesterName, requesterPhone, requesterBrand, requesterEmail, contactWhatsApp, brandWebsite, brandInstagram, offeredBudgetEgp } = schema.parse(req.body);
     
     // Validate minimum budget
     const minBudget = duration === "HALF_DAY" ? 2500 : 3500;
+    
     if (offeredBudgetEgp < minBudget) {
-      return res.status(400).json({ 
-        error: `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP` 
-      });
+      if (duration === "MULTIPLE_DAYS") {
+        return res.status(400).json({ 
+          error: `Minimum budget per day is ${minBudget.toLocaleString()} EGP` 
+        });
+      } else {
+        return res.status(400).json({ 
+          error: `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP` 
+        });
+      }
     }
 
     const booking = await prisma.booking.create({
@@ -59,6 +67,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         modelId,
         startAt: new Date(startAt),
         duration: duration as any,
+        selectedDays: selectedDays ? JSON.stringify(selectedDays) : undefined,
         shootSetting: shootSetting || undefined,
         shootLocation: shootLocation || undefined,
         note,

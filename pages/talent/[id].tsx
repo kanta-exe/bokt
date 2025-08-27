@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import { InputField, SelectField, TextAreaField } from "@/components/FormField";
 import { DateTimePicker } from "@/components/DateTimePicker";
+import { MultipleDaysPicker } from "@/components/MultipleDaysPicker";
 import { useFormValidation } from "@/lib/form-validation";
 
 type Photo = { id: string; url: string; caption?: string | null };
@@ -137,6 +138,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const router = useRouter();
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [duration, setDuration] = useState("HALF_DAY");
+  const [selectedDays, setSelectedDays] = useState<Date[]>([]);
   const [shootSetting, setShootSetting] = useState("");
   const [shootLocation, setShootLocation] = useState("");
   const [note, setNote] = useState("");
@@ -151,7 +153,12 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const [status, setStatus] = useState<string | null>(null);
   const { validator, clearErrors, setFieldError, getFieldError } = useFormValidation();
 
-  const getMinBudget = () => duration === "HALF_DAY" ? 2500 : 3500;
+  const getMinBudget = () => {
+    if (duration === "HALF_DAY") return 2500;
+    if (duration === "FULL_DAY") return 3500;
+    if (duration === "MULTIPLE_DAYS") return 3500; // 3500 per day
+    return 2500;
+  };
 
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -170,8 +177,13 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       return false;
     }
     const minBudget = getMinBudget();
+    
     if (budgetValue < minBudget) {
-      setFieldError('budget', `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP`);
+      if (duration === "MULTIPLE_DAYS") {
+        setFieldError('budget', `Minimum budget per day is ${minBudget.toLocaleString()} EGP`);
+      } else {
+        setFieldError('budget', `Minimum budget for ${duration === "HALF_DAY" ? "half-day" : "full-day"} is ${minBudget.toLocaleString()} EGP`);
+      }
       return false;
     }
     return true;
@@ -205,9 +217,16 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
     } else if (!validator.validateEmail(email)) {
       isValid = false;
     }
-    if (!date) {
-      setFieldError('date', 'Please select a date and time');
-      isValid = false;
+    if (duration === "MULTIPLE_DAYS") {
+      if (selectedDays.length === 0) {
+        setFieldError('date', 'Please select at least one day');
+        isValid = false;
+      }
+    } else {
+      if (!date) {
+        setFieldError('date', 'Please select a date and time');
+        isValid = false;
+      }
     }
     if (!shootSetting.trim()) {
       setFieldError('shootSetting', 'Please select a shoot setting');
@@ -244,8 +263,9 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
     // Clean up the data before sending
     const cleanData = {
       modelId,
-      startAt: new Date(date).toISOString(),
+      startAt: duration === "MULTIPLE_DAYS" ? selectedDays[0].toISOString() : new Date(date).toISOString(),
       duration,
+      selectedDays: duration === "MULTIPLE_DAYS" ? selectedDays.map(day => day.toISOString()) : undefined,
       shootSetting: shootSetting.trim() || undefined,
       shootLocation: shootLocation.trim() || undefined,
       note: note.trim() || undefined,
@@ -256,7 +276,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       brandInstagram: brandInstagram?.trim() || undefined,
       requesterEmail: email?.trim() || undefined,
       contactWhatsApp: whatsApp,
-      offeredBudgetEgp: getBudgetValue(),
+      offeredBudgetEgp: getBudgetValue(), // This is now the per-day amount for multiple days
     };
 
     console.log("📤 Sending booking data:", cleanData);
@@ -272,16 +292,22 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
         const result = await response.json();
         
         // Redirect to success page with booking details
-        const successUrl = `/booking/success?${new URLSearchParams({
+        const params: Record<string, string> = {
           bookingId: result.id,
           modelName: modelName,
           requesterName: name.trim(),
-          startDate: date,
+          startDate: duration === "MULTIPLE_DAYS" ? selectedDays[0].toISOString() : date,
           duration: duration,
           shootSetting: shootSetting,
           shootLocation: shootLocation,
           budget: getBudgetValue().toString(),
-        }).toString()}`;
+        };
+        
+        if (duration === "MULTIPLE_DAYS") {
+          params.selectedDays = selectedDays.length.toString();
+        }
+        
+        const successUrl = `/booking/success?${new URLSearchParams(params).toString()}`;
         
         router.push(successUrl);
       } else {
@@ -309,6 +335,25 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   };
 
   const prettyDate = () => {
+    if (duration === "MULTIPLE_DAYS") {
+      if (selectedDays.length === 0) return "Not set";
+      if (selectedDays.length === 1) {
+        return selectedDays[0].toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+      return `${selectedDays.length} days: ${selectedDays[0].toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${selectedDays[selectedDays.length - 1].toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    }
     if (!date) return "Not set";
     return new Date(date).toLocaleString("en-US", {
       weekday: "long",
@@ -400,17 +445,31 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
              required
            />
           
-          <DateTimePicker
-            label="Date & time"
-            name="date"
-            value={date}
-            onChange={(value) => {
-              setDate(value);
-              validator.clearFieldError('date');
-            }}
-            error={getFieldError('date')}
-            required
-          />
+          {duration === "MULTIPLE_DAYS" ? (
+            <MultipleDaysPicker
+              label="Select days"
+              name="selectedDays"
+              selectedDays={selectedDays}
+              onDaysChange={(days) => {
+                setSelectedDays(days);
+                validator.clearFieldError('date');
+              }}
+              error={getFieldError('date')}
+              required
+            />
+          ) : (
+            <DateTimePicker
+              label="Date & time"
+              name="date"
+              value={date}
+              onChange={(value) => {
+                setDate(value);
+                validator.clearFieldError('date');
+              }}
+              error={getFieldError('date')}
+              required
+            />
+          )}
           
           <SelectField
             label="Shoot Setting"
@@ -470,7 +529,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           </SelectField>
           
           <InputField
-            label="Budget (EGP)"
+            label={duration === "MULTIPLE_DAYS" ? "Budget (EGP/day)" : "Budget (EGP)"}
             name="budget"
             type="number"
             value={budget}
@@ -494,6 +553,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           >
             <option value="HALF_DAY">Half day</option>
             <option value="FULL_DAY">Full day</option>
+            <option value="MULTIPLE_DAYS">Multiple days</option>
           </SelectField>
           
           <label className="flex items-center gap-2 text-sm sm:col-span-2">
@@ -517,8 +577,21 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             <div><span className="text-muted-foreground">When:</span> <span className="text-foreground">{prettyDate()}</span></div>
             <div><span className="text-muted-foreground">Setting:</span> <span className="text-foreground">{shootSetting || 'Not set'}</span></div>
             <div><span className="text-muted-foreground">Location:</span> <span className="text-foreground">{shootLocation || 'Not set'}</span></div>
-            <div><span className="text-muted-foreground">Budget:</span> <span className="text-foreground">{budget ? `EGP ${typeof budget === 'number' ? budget.toLocaleString() : budget}` : 'Not set'}</span></div>
-            <div><span className="text-muted-foreground">Duration:</span> <span className="text-foreground">{duration === 'HALF_DAY' ? 'Half day' : 'Full day'}</span></div>
+            <div><span className="text-muted-foreground">Budget:</span> <span className="text-foreground">
+              {budget ? (
+                duration === "MULTIPLE_DAYS" && selectedDays.length > 0 ? (
+                  `EGP ${(typeof budget === 'number' ? budget : parseInt(budget as string)) * selectedDays.length} (${budget}/day × ${selectedDays.length} days)`
+                ) : (
+                  `EGP ${typeof budget === 'number' ? budget.toLocaleString() : budget}`
+                )
+              ) : 'Not set'}
+            </span></div>
+            <div><span className="text-muted-foreground">Duration:</span> <span className="text-foreground">
+              {duration === 'HALF_DAY' ? 'Half day' : 
+               duration === 'FULL_DAY' ? 'Full day' : 
+               duration === 'MULTIPLE_DAYS' ? `${selectedDays.length} day${selectedDays.length !== 1 ? 's' : ''}` : 
+               'Not set'}
+            </span></div>
             {brand && <div><span className="text-muted-foreground">Brand:</span> <span className="text-foreground">{brand}</span></div>}
             {brandWebsite && <div><span className="text-muted-foreground">Website:</span> <span className="text-foreground">{brandWebsite}</span></div>}
             {brandInstagram && <div><span className="text-muted-foreground">Instagram:</span> <span className="text-foreground">{brandInstagram}</span></div>}

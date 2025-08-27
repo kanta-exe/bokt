@@ -187,6 +187,7 @@ model Booking {
   createdBy   User?        @relation("BookingsCreated", fields: [createdById], references: [id])
   startAt     DateTime
   duration    ShotDuration
+  selectedDays String? // JSON array of selected days for multiple days bookings
   shootSetting String?
   shootLocation String?
   note        String?
@@ -206,4 +207,5 @@ model Booking {
 enum ShotDuration {
   HALF_DAY
   FULL_DAY
+  MULTIPLE_DAYS
 }
