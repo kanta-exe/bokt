@@ -137,6 +137,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
   const router = useRouter();
   const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [duration, setDuration] = useState("HALF_DAY");
+  const [shootLocation, setShootLocation] = useState("");
   const [note, setNote] = useState("");
   const [budget, setBudget] = useState<number | string>("");
   const [name, setName] = useState("");
@@ -207,6 +208,10 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       setFieldError('date', 'Please select a date and time');
       isValid = false;
     }
+    if (!shootLocation.trim()) {
+      setFieldError('shootLocation', 'Please select a shoot location');
+      isValid = false;
+    }
     if (!validateBudget()) {
       isValid = false;
     }
@@ -236,6 +241,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
       modelId,
       startAt: new Date(date).toISOString(),
       duration,
+      shootLocation: shootLocation.trim() || undefined,
       note: note.trim() || undefined,
       requesterName: name.trim(),
       requesterPhone: phone.trim(),
@@ -266,6 +272,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
           requesterName: name.trim(),
           startDate: date,
           duration: duration,
+          shootLocation: shootLocation,
           budget: getBudgetValue().toString(),
         }).toString()}`;
         
@@ -412,6 +419,24 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             <option value="FULL_DAY">Full day</option>
           </SelectField>
           
+          <SelectField
+            label="Shoot Location"
+            name="shootLocation"
+            value={shootLocation}
+            onChange={(e) => setShootLocation(e.target.value)}
+            required
+          >
+            <option value="">Select location</option>
+            <option value="studio">Studio</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="indoor_location">Indoor Location</option>
+            <option value="hotel">Hotel</option>
+            <option value="beach">Beach</option>
+            <option value="urban">Urban/City</option>
+            <option value="nature">Nature</option>
+            <option value="other">Other</option>
+          </SelectField>
+          
           <InputField
             label="Budget (EGP)"
             name="budget"
@@ -445,6 +470,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             <div><span className="text-muted-foreground">Talent:</span> <span className="text-foreground">{modelName}</span></div>
             <div><span className="text-muted-foreground">When:</span> <span className="text-foreground">{prettyDate()}</span></div>
             <div><span className="text-muted-foreground">Duration:</span> <span className="text-foreground">{duration === 'HALF_DAY' ? 'Half day' : 'Full day'}</span></div>
+            <div><span className="text-muted-foreground">Location:</span> <span className="text-foreground">{shootLocation || 'Not set'}</span></div>
             <div><span className="text-muted-foreground">Budget:</span> <span className="text-foreground">{budget ? `EGP ${typeof budget === 'number' ? budget.toLocaleString() : budget}` : 'Not set'}</span></div>
             {brand && <div><span className="text-muted-foreground">Brand:</span> <span className="text-foreground">{brand}</span></div>}
             {brandWebsite && <div><span className="text-muted-foreground">Website:</span> <span className="text-foreground">{brandWebsite}</span></div>}

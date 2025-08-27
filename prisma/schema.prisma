@@ -187,6 +187,7 @@ model Booking {
   createdBy   User?        @relation("BookingsCreated", fields: [createdById], references: [id])
   startAt     DateTime
   duration    ShotDuration
+  shootLocation String?
   note        String?
   // requester contact
   requesterName   String
