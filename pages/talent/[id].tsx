@@ -539,6 +539,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
             }}
             min={getMinBudget()}
             error={getFieldError('budget')}
+            required
           />
           
           <SelectField
@@ -550,6 +551,7 @@ function BookingModal({ modelId, modelName, onClose, isSubmitting, setIsSubmitti
               setDuration(v);
               // Don't pre-fill budget, let user enter it
             }}
+            required
           >
             <option value="HALF_DAY">Half day</option>
             <option value="FULL_DAY">Full day</option>

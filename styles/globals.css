@@ -49,3 +49,35 @@ body {
   .text-balance { text-wrap: balance; }
   .container-page { @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8; }
 }
+
+/* Remove mobile browser default focus outlines */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Allow text selection in form fields */
+input, textarea, select {
+  -webkit-user-select: text;
+  -khtml-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Remove default focus outlines on mobile */
+input:focus, textarea:focus, select:focus, button:focus {
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure our custom focus styles work on mobile */
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
