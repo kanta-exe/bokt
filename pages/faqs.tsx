@@ -112,15 +112,13 @@ const faqs: FAQItem[] = [
   }
 ];
 
-const categories = ["All", "For Businesses", "For Models"];
+const categories = ["For Businesses", "For Models"];
 
 export default function FAQs() {
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState("For Businesses");
   const [openItems, setOpenItems] = useState<number[]>([]);
 
-  const filteredFaqs = selectedCategory === "All" 
-    ? faqs 
-    : faqs.filter(faq => faq.category === selectedCategory);
+  const filteredFaqs = faqs.filter(faq => faq.category === selectedCategory);
 
   const toggleItem = (index: number) => {
     setOpenItems(prev => 
