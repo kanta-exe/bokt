@@ -186,7 +186,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
         try {
           const fileExtension = photo.originalFilename ? photo.originalFilename.split('.').pop() : 'jpg';
-          const fileName = `model_${modelProfile.id}_${Date.now()}_${i}.${fileExtension}`;
+          // Deterministic filename to avoid duplicates: modelId + index + size
+          const fileName = `model_${modelProfile.id}_${i}_${photo.size}.${fileExtension}`;
           const fs = await import('fs');
           const fileBuffer = fs.readFileSync(photo.filepath);
           const supabaseResult = await uploadBufferToSupabase(fileBuffer, fileName, 'models');

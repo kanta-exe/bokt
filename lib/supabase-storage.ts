@@ -48,17 +48,15 @@ export async function uploadPhotoToSupabase(file: File, folder: string = 'models
 
 export async function uploadBufferToSupabase(buffer: Buffer, filename: string, folder: string = 'models'): Promise<UploadResult> {
   try {
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExtension = filename.split('.').pop() || 'jpg';
-    const fileName = `${folder}/${timestamp}_${Math.random().toString(36).substring(2)}.${fileExtension}`;
+    // Use the provided filename deterministically; combine with folder
+    const fileName = `${folder}/${filename}`;
     
     // Convert Buffer to Blob - handle both Node.js Buffer and ArrayBuffer
     const uint8Array = new Uint8Array(buffer);
     const blob = new Blob([uint8Array]);
     
     // Upload file to Supabase Storage
-    const { data, error } = await supabase.storage
+    let { data, error } = await supabase.storage
       .from('photos')
       .upload(fileName, blob, {
         cacheControl: '3600',
@@ -66,7 +64,13 @@ export async function uploadBufferToSupabase(buffer: Buffer, filename: string, f
       });
 
     if (error) {
-      throw new Error(error.message);
+      // If the object already exists (duplicate content), treat as success and return its URL
+      const message = (error as any).message || '';
+      if (message.toLowerCase().includes('already exists') || message.toLowerCase().includes('duplicate')) {
+        error = null as any;
+      } else {
+        throw new Error(message);
+      }
     }
 
     // Get public URL

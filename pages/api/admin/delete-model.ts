@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "DELETE") {
@@ -44,14 +45,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: "Model not found" });
     }
 
-    // Delete the model profile and all related data
-    // This will cascade delete photos and other related records
-    await prisma.modelProfile.delete({
-      where: { id: modelId },
-    });
+    // Collect storage paths from photo URLs before DB deletion
+    const pathsToDelete: string[] = [];
+    for (const p of modelToDelete.photos) {
+      if (!p.url) continue;
+      try {
+        // Expected public URL format: https://<project>.supabase.co/storage/v1/object/public/photos/<path>
+        const idx = p.url.indexOf('/photos/');
+        if (idx !== -1) {
+          const path = p.url.substring(idx + '/photos/'.length);
+          if (path) pathsToDelete.push(path);
+        }
+      } catch {}
+    }
+
+    // Delete the model profile and all related data (cascade removes DB photo rows)
+    await prisma.modelProfile.delete({ where: { id: modelId } });
+
+    // Best-effort: remove files from Supabase Storage
+    if (pathsToDelete.length > 0) {
+      const { error } = await supabase.storage.from('photos').remove(pathsToDelete.map(p => `models/${p.split('models/')[1] || p}`));
+      if (error) {
+        console.warn('Supabase delete error:', error.message);
+      }
+    }
 
     console.log(`🗑️ Model deleted: ${modelToDelete.user.email} (${modelToDelete.user.name})`);
-    console.log(`🗑️ Deleted ${modelToDelete.photos.length} photos`);
+    console.log(`🗑️ Requested deletion of ${modelToDelete.photos.length} storage files`);
 
     return res.status(200).json({ 
       success: true, 
