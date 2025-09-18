@@ -653,7 +653,7 @@ export default function ModelApplication() {
                     required
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Max 50 MB per photo, 250 MB total
+                    Max 50 MB
                   </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
@@ -723,7 +723,6 @@ export default function ModelApplication() {
                   <ul className="text-sm text-foreground space-y-1">
                     <li>• Your application will be reviewed by our team</li>
                     <li>• You&apos;ll receive an email within 2-3 business days</li>
-                    <li>• If approved, you can complete your profile and upload photos</li>
                     <li>• Your profile will then be visible to brands on the platform</li>
                   </ul>
                 </div>

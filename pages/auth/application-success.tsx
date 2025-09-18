@@ -37,14 +37,6 @@ export default function ApplicationSuccess() {
             </li>
             <li className="flex items-start">
               <span className="text-accent mr-2">•</span>
-              You&apos;ll receive an email notification about the decision
-            </li>
-            <li className="flex items-start">
-              <span className="text-accent mr-2">•</span>
-              If approved, you&apos;ll receive login credentials to complete your profile
-            </li>
-            <li className="flex items-start">
-              <span className="text-accent mr-2">•</span>
               Your profile will then be visible to brands on the platform
             </li>
           </ul>
