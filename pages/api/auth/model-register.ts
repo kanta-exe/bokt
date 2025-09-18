@@ -59,17 +59,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Parse FormData
     const formData = await new Promise<{ [key: string]: any }>((resolve, reject) => {
-      const form = new IncomingForm();
-      
-      // Configure file size limits (formidable v3 has different API)
-      
+      const form = new IncomingForm({
+        multiples: true,
+        keepExtensions: true,
+        maxFileSize: 50 * 1024 * 1024, // 50MB per file (Supabase limit)
+        maxTotalFileSize: 250 * 1024 * 1024, // 250MB total across all files (5 x 50MB)
+        allowEmptyFiles: false,
+      });
+
       form.parse(req, (err: any, fields: any, files: any) => {
-        if (err) reject(err);
+        if (err) {
+          // Formidable emits errors with httpCode when size limits are exceeded
+          if (err.httpCode === 413) {
+            return reject(Object.assign(new Error('Payload Too Large'), { httpCode: 413 }));
+          }
+          return reject(err);
+        }
         console.log('Formidable parsed fields:', fields);
         console.log('Formidable parsed files:', files);
         resolve({ ...fields, ...files });
       });
     });
+
+    // Normalize photos to an array and enforce size limits before any heavy work
+    const rawPhotos = formData.photos
+      ? (Array.isArray(formData.photos) ? formData.photos : [formData.photos])
+      : [];
+
+    const FIFTY_MB = 50 * 1024 * 1024;
+    const TWO_HUNDRED_FIFTY_MB = 250 * 1024 * 1024;
+
+    const totalBytes = rawPhotos.reduce((sum: number, f: any) => sum + (Number(f.size) || 0), 0);
+    const tooLargeFile = rawPhotos.find((f: any) => Number(f.size) > FIFTY_MB);
+    if (tooLargeFile || totalBytes > TWO_HUNDRED_FIFTY_MB) {
+      return res.status(413).json({
+        error: 'Uploads too large',
+        details: 'Please upload up to 5 images, max 50MB each and 250MB total.'
+      });
+    }
 
     // Extract and validate data
     const data = {
@@ -96,7 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       modelingExperience: Array.isArray(formData.modelingExperience) ? formData.modelingExperience[0] : formData.modelingExperience,
       bio: Array.isArray(formData.bio) ? formData.bio[0] : formData.bio || "",
       
-      photos: formData.photos || [],
+      photos: rawPhotos,
       termsAccepted: (Array.isArray(formData.termsAccepted) ? formData.termsAccepted[0] : formData.termsAccepted) === 'true',
     };
 
@@ -115,122 +142,79 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const tempPassword = Math.random().toString(36).slice(-12);
     const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Create user and model profile in a transaction with extended timeout
-    const result = await prisma.$transaction(async (tx) => {
-      // Create user account (not approved initially)
-      const user = await tx.user.create({
-        data: {
-          email: validatedData.email,
-          name: validatedData.name,
-          passwordHash,
-          role: Role.MODEL,
-        },
-      });
-
-      // Create model profile
-      const modelProfile = await tx.modelProfile.create({
-        data: {
-          userId: user.id,
-          displayName: validatedData.nickname || validatedData.name,
-          bio: validatedData.bio || "",
-          location: validatedData.location,
-          gender: validatedData.gender as any,
-          heightCm: validatedData.heightCm,
-          category: validatedData.categories[0] as any, // Use first category as primary
-          approved: false,
-          available: true,
-          instagramHandle: validatedData.instagramHandle,
-          modelingExperience: validatedData.modelingExperience,
-          categories: JSON.stringify(validatedData.categories),
-          shirtSize: validatedData.shirtSize,
-          pantSize: validatedData.pantSize,
-          shoesSize: validatedData.shoesSize,
-          
-          // Additional measurements
-          bustCm: validatedData.bustCm,
-          waistCm: validatedData.waistCm,
-          
-          // Personal details
-          age: validatedData.age,
-          
-          // Professional details - these fields don't exist in the schema
-        },
-      });
-
-      // Store photos in the database and upload to Supabase
-      if (validatedData.photos && validatedData.photos.length > 0) {
-        const photoData = [];
-        
-        console.log(`📸 Processing ${validatedData.photos.length} photos for user ${user.id}`);
-        
-        for (let i = 0; i < validatedData.photos.length; i++) {
-          const photo = validatedData.photos[i];
-          try {
-            console.log(`📸 Processing photo ${i + 1}: ${photo.originalFilename}`);
-            
-            // Generate unique filename for Supabase
-            const fileExtension = photo.originalFilename ? photo.originalFilename.split('.').pop() : 'jpg';
-            const fileName = `model_${modelProfile.id}_${Date.now()}_${i}.${fileExtension}`;
-            
-            console.log(`📁 Uploading to Supabase: ${fileName}`);
-            
-            // Read the file as buffer and upload to Supabase
-            const fs = await import('fs');
-            const fileBuffer = fs.readFileSync(photo.filepath);
-            
-            // Upload to Supabase Storage
-            const supabaseResult = await uploadBufferToSupabase(fileBuffer, fileName, 'models');
-            
-            if (supabaseResult.success) {
-              console.log(`✅ Successfully uploaded to Supabase: ${photo.originalFilename} -> ${supabaseResult.url}`);
-              
-              photoData.push({
-                url: supabaseResult.url,
-                modelId: modelProfile.id,
-                caption: photo.originalFilename || `Photo ${i + 1}`
-              });
-            } else {
-              throw new Error(supabaseResult.error || 'Supabase upload failed');
-            }
-            
-          } catch (photoError) {
-            console.error(`❌ Error processing photo ${i + 1}:`, photoError);
-            console.error(`❌ Photo details:`, {
-              originalFilename: photo.originalFilename,
-              filepath: photo.filepath,
-              size: photo.size
-            });
-            
-            // Fallback to placeholder if Supabase upload fails
-            photoData.push({
-              url: `https://via.placeholder.com/400x600/cccccc/666666?text=Photo+${i + 1}`,
-              modelId: modelProfile.id,
-              caption: `Photo ${i + 1} - ${photo.originalFilename || 'Upload failed'}`
-            });
-          }
-        }
-        
-        if (photoData.length > 0) {
-          await tx.photo.createMany({
-            data: photoData
-          });
-          
-          console.log(`✅ Saved ${photoData.length} photos to database and Supabase for user ${user.id}`);
-        }
-      } else {
-        console.log(`ℹ️ No photos provided for user ${user.id}`);
-      }
-      
-      // Store additional model information
-      console.log(`Model sizes - Shirt: ${validatedData.shirtSize}, Pant: ${validatedData.pantSize}, Shoes: ${validatedData.shoesSize}`);
-      console.log(`Categories: ${validatedData.categories.join(", ")}`);
-      console.log(`Experience: ${validatedData.modelingExperience}`);
-      console.log(`Instagram: ${validatedData.instagramHandle}`);
-
-      return { user, modelProfile };
-    }, {
-      timeout: 30000 // 30 seconds timeout
+    // Create user, then model profile (no long transaction)
+    const user = await prisma.user.create({
+      data: {
+        email: validatedData.email,
+        name: validatedData.name,
+        passwordHash,
+        role: Role.MODEL,
+      },
     });
+
+    const modelProfile = await prisma.modelProfile.create({
+      data: {
+        userId: user.id,
+        displayName: validatedData.nickname || validatedData.name,
+        bio: validatedData.bio || "",
+        location: validatedData.location,
+        gender: validatedData.gender as any,
+        heightCm: validatedData.heightCm,
+        category: validatedData.categories[0] as any,
+        approved: false,
+        available: true,
+        instagramHandle: validatedData.instagramHandle,
+        modelingExperience: validatedData.modelingExperience,
+        categories: JSON.stringify(validatedData.categories),
+        shirtSize: validatedData.shirtSize,
+        pantSize: validatedData.pantSize,
+        shoesSize: validatedData.shoesSize,
+        bustCm: validatedData.bustCm,
+        waistCm: validatedData.waistCm,
+        age: validatedData.age,
+      },
+    });
+
+    // Upload photos OUTSIDE any transaction, then persist URLs
+    let photoData: { url: string; modelId: string; caption?: string }[] = [];
+    if (validatedData.photos && validatedData.photos.length > 0) {
+      console.log(`📸 Processing ${validatedData.photos.length} photos for user ${user.id}`);
+      for (let i = 0; i < validatedData.photos.length; i++) {
+        const photo = validatedData.photos[i];
+        if (!photo?.filepath) {
+          throw new Error('Uploaded file missing path');
+        }
+        try {
+          const fileExtension = photo.originalFilename ? photo.originalFilename.split('.').pop() : 'jpg';
+          const fileName = `model_${modelProfile.id}_${Date.now()}_${i}.${fileExtension}`;
+          const fs = await import('fs');
+          const fileBuffer = fs.readFileSync(photo.filepath);
+          const supabaseResult = await uploadBufferToSupabase(fileBuffer, fileName, 'models');
+          if (supabaseResult.success) {
+            photoData.push({ url: supabaseResult.url, modelId: modelProfile.id, caption: photo.originalFilename || `Photo ${i + 1}` });
+          } else {
+            throw new Error(supabaseResult.error || 'Supabase upload failed');
+          }
+        } catch (photoError) {
+          console.error(`❌ Error processing photo ${i + 1}:`, photoError);
+          photoData.push({ url: `https://via.placeholder.com/400x600/cccccc/666666?text=Photo+${i + 1}`, modelId: modelProfile.id, caption: `Photo ${i + 1} - ${photo.originalFilename || 'Upload failed'}` });
+        }
+      }
+      if (photoData.length > 0) {
+        await prisma.photo.createMany({ data: photoData });
+        console.log(`✅ Saved ${photoData.length} photos to database and Supabase for user ${user.id}`);
+      }
+    } else {
+      console.log(`ℹ️ No photos provided for user ${user.id}`);
+    }
+
+    // Log extra info
+    console.log(`Model sizes - Shirt: ${validatedData.shirtSize}, Pant: ${validatedData.pantSize}, Shoes: ${validatedData.shoesSize}`);
+    console.log(`Categories: ${validatedData.categories.join(", ")}`);
+    console.log(`Experience: ${validatedData.modelingExperience}`);
+    console.log(`Instagram: ${validatedData.instagramHandle}`);
+
+    const result = { user, modelProfile };
 
     // TODO: Send email notification to admins about new application
     // TODO: Send confirmation email to applicant
@@ -243,7 +227,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   } catch (error: any) {
     console.error("Model registration error:", error);
-    
+    // Surface a clear message for oversized uploads
+    if (error?.httpCode === 413) {
+      return res.status(413).json({
+        error: 'Uploads too large',
+        details: 'Please upload up to 5 images, max 50MB each and 250MB total.'
+      });
+    }
+
     if (error.name === "ZodError") {
       return res.status(400).json({ 
         error: "Invalid application data",
@@ -251,8 +242,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
     
+    // In non-production, return the specific error message to aid debugging
+    const isProd = process.env.NODE_ENV === 'production';
     return res.status(500).json({ 
-      error: "Internal server error. Please try again." 
+      error: isProd ? "Internal server error. Please try again." : (error?.message || 'Server error'),
+      details: isProd ? undefined : {
+        name: error?.name,
+        message: error?.message,
+        stack: error?.stack,
+      }
     });
   }
 }
