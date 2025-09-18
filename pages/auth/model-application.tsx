@@ -221,7 +221,29 @@ export default function ModelApplication() {
     return complete;
   };
 
-  const handlePhotoUpload = (files: FileList | null) => {
+  const compressImage = async (file: File): Promise<File> => {
+    try {
+      const imageBitmap = await createImageBitmap(file);
+      const maxDim = 2000;
+      const scale = Math.min(1, maxDim / Math.max(imageBitmap.width, imageBitmap.height));
+      const targetW = Math.round(imageBitmap.width * scale);
+      const targetH = Math.round(imageBitmap.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(imageBitmap, 0, 0, targetW, targetH);
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.8));
+      if (!blob) return file;
+      const newFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
+      return newFile;
+    } catch {
+      return file;
+    }
+  };
+
+  const handlePhotoUpload = async (files: FileList | null) => {
     if (!files) return;
     
     const fileArray = Array.from(files);
@@ -242,9 +264,17 @@ export default function ModelApplication() {
       return;
     }
     
-    // Validate each file size
+    // Optionally compress images client-side to speed up uploads
+    const compressedFiles: File[] = [];
+    for (let i = 0; i < fileArray.length; i++) {
+      const f = fileArray[i];
+      const compressed = await compressImage(f);
+      compressedFiles.push(compressed);
+    }
+
+    // Validate each file size after compression
     let hasErrors = false;
-    fileArray.forEach((file, index) => {
+    compressedFiles.forEach((file, index) => {
       if (file.size > maxSize) {
         setFieldError('photos', `Photo ${index + 1} is too large. Maximum file size is 50MB per photo.`);
         hasErrors = true;
@@ -255,7 +285,7 @@ export default function ModelApplication() {
 
     // Validate total size (max 250MB total)
     const currentTotalSize = form.photos.reduce((total, file) => total + file.size, 0);
-    const newTotalSize = currentTotalSize + fileArray.reduce((total, file) => total + file.size, 0);
+    const newTotalSize = currentTotalSize + compressedFiles.reduce((total, file) => total + file.size, 0);
     const maxTotalSize = 250 * 1024 * 1024; // 250MB total
     
     if (newTotalSize > maxTotalSize) {
@@ -263,7 +293,7 @@ export default function ModelApplication() {
       return;
     }
     
-    updateForm({ photos: [...form.photos, ...fileArray] });
+    updateForm({ photos: [...form.photos, ...compressedFiles] });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

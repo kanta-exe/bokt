@@ -179,28 +179,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let photoData: { url: string; modelId: string; caption?: string }[] = [];
     if (validatedData.photos && validatedData.photos.length > 0) {
       console.log(`📸 Processing ${validatedData.photos.length} photos for user ${user.id}`);
-      for (let i = 0; i < validatedData.photos.length; i++) {
-        const photo = validatedData.photos[i];
+      const fs = await import('fs');
+      const crypto = await import('crypto');
+
+      const uploadPromises = validatedData.photos.map(async (photo: any, i: number) => {
         if (!photo?.filepath) {
           throw new Error('Uploaded file missing path');
         }
         try {
-          const fileExtension = photo.originalFilename ? photo.originalFilename.split('.').pop() : 'jpg';
-          // Deterministic filename to avoid duplicates: modelId + index + size
-          const fileName = `model_${modelProfile.id}_${i}_${photo.size}.${fileExtension}`;
-          const fs = await import('fs');
+          const originalName = photo.originalFilename || `photo_${i + 1}`;
+          // Read original buffer; no server-side compression to avoid native dependency
           const fileBuffer = fs.readFileSync(photo.filepath);
+
+          // Deterministic filename using content hash to avoid duplicates; keep original extension
+          const originalExt = (photo.originalFilename && photo.originalFilename.includes('.')) ? photo.originalFilename.split('.').pop() : 'jpg';
+          const hash = crypto.createHash('sha1').update(fileBuffer).digest('hex').slice(0, 12);
+          const fileName = `model_${modelProfile.id}_${i}_${hash}.${originalExt}`;
+
           const supabaseResult = await uploadBufferToSupabase(fileBuffer, fileName, 'models');
           if (supabaseResult.success) {
-            photoData.push({ url: supabaseResult.url, modelId: modelProfile.id, caption: photo.originalFilename || `Photo ${i + 1}` });
+            return { url: supabaseResult.url, modelId: modelProfile.id, caption: originalName };
           } else {
             throw new Error(supabaseResult.error || 'Supabase upload failed');
           }
         } catch (photoError) {
           console.error(`❌ Error processing photo ${i + 1}:`, photoError);
-          photoData.push({ url: `https://via.placeholder.com/400x600/cccccc/666666?text=Photo+${i + 1}`, modelId: modelProfile.id, caption: `Photo ${i + 1} - ${photo.originalFilename || 'Upload failed'}` });
+          return { url: `https://via.placeholder.com/400x600/cccccc/666666?text=Photo+${i + 1}`, modelId: modelProfile.id, caption: `Photo ${i + 1} - ${photo.originalFilename || 'Upload failed'}` };
         }
-      }
+      });
+
+      photoData = await Promise.all(uploadPromises);
+
       if (photoData.length > 0) {
         await prisma.photo.createMany({ data: photoData });
         console.log(`✅ Saved ${photoData.length} photos to database and Supabase for user ${user.id}`);
