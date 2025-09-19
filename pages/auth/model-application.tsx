@@ -270,7 +270,8 @@ export default function ModelApplication() {
     if (!files) return;
     
     const fileArray = Array.from(files);
-    const maxSize = 50 * 1024 * 1024; // 50MB limit per file (Supabase)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const maxSize = isMobile ? 10 * 1024 * 1024 : 50 * 1024 * 1024; // 10MB mobile, 50MB desktop
     
     // Validate file count
     if (form.photos.length + fileArray.length > 5) {
@@ -288,7 +289,6 @@ export default function ModelApplication() {
     }
     
     // Skip compression entirely on mobile to avoid issues
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     let processedFiles: File[];
     if (isMobile) {
@@ -331,12 +331,14 @@ export default function ModelApplication() {
       return;
     }
 
-    // Check total file size (max 250MB for all photos combined)
+    // Check total file size (mobile vs desktop limits)
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const totalSize = form.photos.reduce((total, file) => total + file.size, 0);
-    const maxTotalSize = 250 * 1024 * 1024; // 250MB total
+    const maxTotalSize = isMobile ? 50 * 1024 * 1024 : 250 * 1024 * 1024; // 50MB mobile, 250MB desktop
     
     if (totalSize > maxTotalSize) {
-      setFieldError('photos', `Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is 250MB.`);
+      const limitText = isMobile ? '50MB' : '250MB';
+      setFieldError('photos', `Total photo size (${(totalSize / 1024 / 1024).toFixed(1)}MB) exceeds limit. Maximum total size is ${limitText}.`);
       return;
     }
 
@@ -353,7 +355,7 @@ export default function ModelApplication() {
     });
 
     try {
-      // Create FormData for file uploads
+      // Use FormData for both mobile and desktop, but with mobile optimizations
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('email', form.email);
@@ -379,23 +381,26 @@ export default function ModelApplication() {
       formData.append('bio', form.bio);
       formData.append('termsAccepted', form.termsAccepted.toString());
       
-      // Append photos - mobile-friendly approach
+      // Append photos - optimized for mobile
       form.photos.forEach((photo, index) => {
-        // For mobile, append the original file directly without creating new File objects
-        formData.append(`photos`, photo, photo.name);
+        // Use simple append for mobile compatibility
+        formData.append(`photos`, photo);
       });
 
-      // Add timeout for mobile devices (2 minutes)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
+      // Add timeout (3 minutes for mobile, 2 for desktop)
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const timeoutMs = isMobile ? 180000 : 120000; // 3 min mobile, 2 min desktop
       
-      console.log('🚀 Starting upload to server...');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      
+      console.log(`🚀 Starting upload to server (${isMobile ? 'mobile' : 'desktop'})...`);
       console.log('📊 FormData contents:', {
         fieldCount: Array.from(formData.keys()).length,
         hasPhotos: formData.has('photos'),
         photoCount: form.photos.length
       });
-
+      
       const res = await fetch("/api/auth/model-register", {
         method: "POST",
         body: formData,
@@ -744,9 +749,9 @@ export default function ModelApplication() {
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
                   />
-                                     <p className="mt-1 text-xs text-muted-foreground">
-                    Max 50 MB
-                   </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    📱 Mobile: Max 10MB per photo, 50MB total | 🖥️ Desktop: Max 50MB per photo, 250MB total
+                  </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
                   )}

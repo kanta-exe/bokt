@@ -67,13 +67,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Parse FormData with timeout for mobile
     const formData = await Promise.race([
       new Promise<{ [key: string]: any }>((resolve, reject) => {
-        const form = new IncomingForm({
-          multiples: true,
-          keepExtensions: true,
-          maxFileSize: 50 * 1024 * 1024, // 50MB per file (Supabase limit)
-          maxTotalFileSize: 250 * 1024 * 1024, // 250MB total across all files (5 x 50MB)
-          allowEmptyFiles: false,
-        });
+      // Reduce limits for mobile compatibility
+      const isMobile = req.headers['user-agent'] && /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(req.headers['user-agent']);
+      
+      const form = new IncomingForm({
+        multiples: true,
+        keepExtensions: true,
+        maxFileSize: isMobile ? 10 * 1024 * 1024 : 50 * 1024 * 1024, // 10MB mobile, 50MB desktop
+        maxTotalFileSize: isMobile ? 50 * 1024 * 1024 : 250 * 1024 * 1024, // 50MB mobile, 250MB desktop
+        allowEmptyFiles: false,
+      });
 
         form.parse(req, (err: any, fields: any, files: any) => {
           if (err) {
