@@ -223,6 +223,13 @@ export default function ModelApplication() {
 
   const compressImage = async (file: File): Promise<File> => {
     try {
+      // Skip compression for very small files on mobile to avoid issues
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile && file.size < 2 * 1024 * 1024) { // Skip if less than 2MB on mobile
+        console.log('📱 Skipping compression for small file on mobile:', file.name);
+        return file;
+      }
+      
       const imageBitmap = await createImageBitmap(file);
       const maxDim = 2000;
       const scale = Math.min(1, maxDim / Math.max(imageBitmap.width, imageBitmap.height));
@@ -234,11 +241,12 @@ export default function ModelApplication() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return file;
       ctx.drawImage(imageBitmap, 0, 0, targetW, targetH);
-      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.8));
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.7));
       if (!blob) return file;
       const newFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
       return newFile;
-    } catch {
+    } catch (error) {
+      console.warn('⚠️ Compression failed, using original file:', error);
       return file;
     }
   };
@@ -264,30 +272,24 @@ export default function ModelApplication() {
       return;
     }
     
-    // Optionally compress images client-side to speed up uploads
-    const compressedFiles: File[] = [];
-    for (let i = 0; i < fileArray.length; i++) {
-      const f = fileArray[i];
-      const compressed = await compressImage(f);
-      compressedFiles.push(compressed);
-    }
+    // Compress images client-side in parallel to speed up uploads
+    const compressedFiles: File[] = await Promise.all(
+      fileArray.map(file => compressImage(file))
+    );
 
-    // Validate each file size after compression
-    let hasErrors = false;
-    compressedFiles.forEach((file, index) => {
-      if (file.size > maxSize) {
-        setFieldError('photos', `Photo ${index + 1} is too large. Maximum file size is 50MB per photo.`);
-        hasErrors = true;
-      }
-    });
-    
-    if (hasErrors) return;
-
-    // Validate total size (max 250MB total)
+    // Validate file sizes after compression (consolidated)
     const currentTotalSize = form.photos.reduce((total, file) => total + file.size, 0);
     const newTotalSize = currentTotalSize + compressedFiles.reduce((total, file) => total + file.size, 0);
     const maxTotalSize = 250 * 1024 * 1024; // 250MB total
     
+    // Check individual file sizes
+    const oversizedFiles = compressedFiles.filter(file => file.size > maxSize);
+    if (oversizedFiles.length > 0) {
+      setFieldError('photos', `Photo(s) ${oversizedFiles.map((_, i) => i + 1).join(', ')} are too large. Maximum file size is 50MB per photo.`);
+      return;
+    }
+    
+    // Check total size
     if (newTotalSize > maxTotalSize) {
       setFieldError('photos', `Total photo size would exceed 250MB limit. Please select smaller photos.`);
       return;
@@ -316,6 +318,15 @@ export default function ModelApplication() {
 
     setLoading(true);
     clearErrors();
+    
+    // Show compression progress
+    console.log('📸 Compressing and uploading photos...');
+    console.log('📱 Device info:', {
+      userAgent: navigator.userAgent,
+      isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+      photosCount: form.photos.length,
+      totalSize: `${(form.photos.reduce((total, file) => total + file.size, 0) / 1024 / 1024).toFixed(1)}MB`
+    });
 
     try {
       // Create FormData for file uploads
@@ -349,10 +360,18 @@ export default function ModelApplication() {
         formData.append(`photos`, photo);
       });
 
+      // Add timeout for mobile devices (2 minutes)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
+      
+      console.log('🚀 Starting upload to server...');
       const res = await fetch("/api/auth/model-register", {
         method: "POST",
         body: formData,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       console.log('Response status:', res.status);
       console.log('Response ok:', res.ok);
@@ -396,9 +415,19 @@ export default function ModelApplication() {
         
         console.log('Error response:', { status: res.status, message: errorMessage });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submission error:", err);
-      setFieldError('general', 'An unexpected error occurred. Please try again.');
+      
+      // Handle specific mobile errors
+      if (err.name === 'AbortError') {
+        setFieldError('general', 'Upload timed out. Please try again with smaller photos or better internet connection.');
+      } else if (err.message?.includes('Failed to fetch')) {
+        setFieldError('general', 'Network error. Please check your internet connection and try again.');
+      } else if (err.message?.includes('QuotaExceededError')) {
+        setFieldError('general', 'Device storage quota exceeded. Please try with fewer photos.');
+      } else {
+        setFieldError('general', 'An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

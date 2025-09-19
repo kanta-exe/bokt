@@ -17,13 +17,13 @@ export default function Home({ featured, results }: Props) {
         {/* Override share preview for homepage */}
         <meta property="og:title" content="BOKT. Book Fashion Models" />
         <meta property="og:description" content="Book fashion models fast. Direct, transparent, and reliable." />
-        <meta property="og:image" content="/og-bokt.png" />
+        <meta property="og:image" content="/og-bokt.png?v=2" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="BOKT. Book Fashion Models" />
         <meta name="twitter:description" content="Book fashion models fast. Direct, transparent, and reliable." />
-        <meta name="twitter:image" content="/og-bokt.png" />
+        <meta name="twitter:image" content="/og-bokt.png?v=2" />
         <meta name="robots" content="noimageindex" />
       </Head>
       {/* Hero */}
