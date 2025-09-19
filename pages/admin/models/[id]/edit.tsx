@@ -507,6 +507,23 @@ export default function EditModel({ model }: Props) {
                 )}
               </div>
               <div>
+                <button
+                  onClick={async () => {
+                    try {
+                      await fetch('/api/admin/update-model', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ modelId: model.id, approved: !formData.approved })
+                      });
+                      window.location.reload();
+                    } catch {}
+                  }}
+                  className={`px-3 py-1 text-sm rounded-md transition-colors ${formData.approved ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                >
+                  {formData.approved ? 'Hide from site' : 'Unhide on site'}
+                </button>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1">Availability</label>
                 {isEditing ? (
                   <select
