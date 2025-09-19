@@ -52,11 +52,16 @@ const applicationSchema = z.object({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log('🚀 Model registration API called');
+  console.log('Request method:', req.method);
+  console.log('Request headers:', req.headers);
+  
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
   }
 
   try {
+    console.log('📝 Starting form data parsing...');
     // Parse FormData
     const formData = await new Promise<{ [key: string]: any }>((resolve, reject) => {
       const form = new IncomingForm({
@@ -69,17 +74,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       form.parse(req, (err: any, fields: any, files: any) => {
         if (err) {
+          console.error('❌ Formidable parsing error:', err);
           // Formidable emits errors with httpCode when size limits are exceeded
           if (err.httpCode === 413) {
             return reject(Object.assign(new Error('Payload Too Large'), { httpCode: 413 }));
           }
           return reject(err);
         }
-        console.log('Formidable parsed fields:', fields);
-        console.log('Formidable parsed files:', files);
+        console.log('✅ Formidable parsed successfully');
+        console.log('Fields:', Object.keys(fields || {}));
+        console.log('Files:', Object.keys(files || {}));
         resolve({ ...fields, ...files });
       });
     });
+
+    console.log('📸 Processing photos...');
+    console.log('Raw photos count:', formData.photos ? (Array.isArray(formData.photos) ? formData.photos.length : 1) : 0);
 
     // Normalize photos to an array and enforce size limits before any heavy work
     const rawPhotos = formData.photos

@@ -223,10 +223,18 @@ export default function ModelApplication() {
 
   const compressImage = async (file: File): Promise<File> => {
     try {
-      // Skip compression for very small files on mobile to avoid issues
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile && file.size < 2 * 1024 * 1024) { // Skip if less than 2MB on mobile
-        console.log('📱 Skipping compression for small file on mobile:', file.name);
+      const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+      
+      // Skip compression on mobile devices to avoid issues
+      if (isMobile) {
+        console.log('📱 Skipping compression on mobile device:', file.name);
+        return file;
+      }
+      
+      // Check if createImageBitmap is supported
+      if (typeof createImageBitmap === 'undefined') {
+        console.log('⚠️ createImageBitmap not supported, using original file');
         return file;
       }
       
@@ -241,9 +249,16 @@ export default function ModelApplication() {
       const ctx = canvas.getContext('2d');
       if (!ctx) return file;
       ctx.drawImage(imageBitmap, 0, 0, targetW, targetH);
-      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.7));
+      
+      // Use JPEG instead of WebP for better mobile compatibility
+      const format = isIOS ? 'image/jpeg' : 'image/webp';
+      const quality = 0.8;
+      
+      const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, format, quality));
       if (!blob) return file;
-      const newFile = new File([blob], file.name.replace(/\.[^.]+$/, '.webp'), { type: 'image/webp' });
+      
+      const extension = isIOS ? '.jpg' : '.webp';
+      const newFile = new File([blob], file.name.replace(/\.[^.]+$/, extension), { type: format });
       return newFile;
     } catch (error) {
       console.warn('⚠️ Compression failed, using original file:', error);
@@ -273,9 +288,22 @@ export default function ModelApplication() {
     }
     
     // Compress images client-side in parallel to speed up uploads
-    const compressedFiles: File[] = await Promise.all(
-      fileArray.map(file => compressImage(file))
-    );
+    // Use sequential processing on mobile to avoid memory issues
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    let compressedFiles: File[];
+    if (isMobile) {
+      console.log('📱 Using sequential compression on mobile');
+      compressedFiles = [];
+      for (const file of fileArray) {
+        const compressed = await compressImage(file);
+        compressedFiles.push(compressed);
+      }
+    } else {
+      compressedFiles = await Promise.all(
+        fileArray.map(file => compressImage(file))
+      );
+    }
 
     // Validate file sizes after compression (consolidated)
     const currentTotalSize = form.photos.reduce((total, file) => total + file.size, 0);
@@ -355,9 +383,11 @@ export default function ModelApplication() {
       formData.append('bio', form.bio);
       formData.append('termsAccepted', form.termsAccepted.toString());
       
-      // Append photos
+      // Append photos - ensure proper handling for mobile
       form.photos.forEach((photo, index) => {
-        formData.append(`photos`, photo);
+        // Create a fresh File object to avoid mobile corruption issues
+        const freshFile = new File([photo], photo.name, { type: photo.type });
+        formData.append(`photos`, freshFile);
       });
 
       // Add timeout for mobile devices (2 minutes)
@@ -365,6 +395,12 @@ export default function ModelApplication() {
       const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
       
       console.log('🚀 Starting upload to server...');
+      console.log('📊 FormData contents:', {
+        fieldCount: Array.from(formData.keys()).length,
+        hasPhotos: formData.has('photos'),
+        photoCount: form.photos.length
+      });
+      
       const res = await fetch("/api/auth/model-register", {
         method: "POST",
         body: formData,
@@ -372,6 +408,7 @@ export default function ModelApplication() {
       });
       
       clearTimeout(timeoutId);
+      console.log('📡 Server response received:', res.status, res.statusText);
 
       console.log('Response status:', res.status);
       console.log('Response ok:', res.ok);
@@ -433,6 +470,24 @@ export default function ModelApplication() {
     }
   };
 
+  const testConnection = async () => {
+    console.log('🧪 Testing server connection...');
+    try {
+      const res = await fetch("/api/test-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test: true }),
+      });
+      
+      const data = await res.json();
+      console.log('🧪 Test response:', data);
+      alert(`Test successful! Server responded: ${data.message}`);
+    } catch (error) {
+      console.error('🧪 Test failed:', error);
+      alert(`Test failed: ${error}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background py-12">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -441,7 +496,16 @@ export default function ModelApplication() {
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-foreground">Model Application</h1>
-              <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
+                <button 
+                  type="button"
+                  onClick={testConnection}
+                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Test Server
+                </button>
+              </div>
             </div>
             <div className="mt-4">
               <div className="bg-muted rounded-full h-2">
@@ -706,7 +770,8 @@ export default function ModelApplication() {
                   <input
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    capture="environment"
                     className="mt-1 block w-full rounded-md border border-border bg-muted text-foreground shadow-sm focus:border-accent focus:ring-accent focus:bg-background"
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
