@@ -400,7 +400,7 @@ export default function ModelApplication() {
         hasPhotos: formData.has('photos'),
         photoCount: form.photos.length
       });
-      
+
       const res = await fetch("/api/auth/model-register", {
         method: "POST",
         body: formData,
@@ -419,7 +419,7 @@ export default function ModelApplication() {
       } else {
         let errorMessage = "Failed to submit application. Please try again.";
         
-        if (res.status === 413) {
+                 if (res.status === 413) {
           try {
             const errorData = await res.json();
             const details = errorData?.details || errorData?.error;
@@ -463,30 +463,13 @@ export default function ModelApplication() {
       } else if (err.message?.includes('QuotaExceededError')) {
         setFieldError('general', 'Device storage quota exceeded. Please try with fewer photos.');
       } else {
-        setFieldError('general', 'An unexpected error occurred. Please try again.');
+      setFieldError('general', 'An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const testConnection = async () => {
-    console.log('🧪 Testing server connection...');
-    try {
-      const res = await fetch("/api/test-upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test: true }),
-      });
-      
-      const data = await res.json();
-      console.log('🧪 Test response:', data);
-      alert(`Test successful! Server responded: ${data.message}`);
-    } catch (error) {
-      console.error('🧪 Test failed:', error);
-      alert(`Test failed: ${error}`);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -496,16 +479,7 @@ export default function ModelApplication() {
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-foreground">Model Application</h1>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
-                <button 
-                  type="button"
-                  onClick={testConnection}
-                  className="px-2 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                  Test Server
-                </button>
-              </div>
+              <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
             </div>
             <div className="mt-4">
               <div className="bg-muted rounded-full h-2">
@@ -771,14 +745,13 @@ export default function ModelApplication() {
                     type="file"
                     multiple
                     accept="image/jpeg,image/jpg,image/png,image/webp"
-                    capture="environment"
                     className="mt-1 block w-full rounded-md border border-border bg-muted text-foreground shadow-sm focus:border-accent focus:ring-accent focus:bg-background"
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
+                                     <p className="mt-1 text-xs text-muted-foreground">
                     Max 50 MB
-                  </p>
+                   </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
                   )}
