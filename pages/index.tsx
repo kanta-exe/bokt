@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Head from "next/head";
 import { prisma } from "@/lib/prisma";
 import type { GetServerSideProps } from "next";
 import FeaturedSlider from "@/components/FeaturedSlider";
@@ -12,6 +13,15 @@ type Props = {
 export default function Home({ featured, results }: Props) {
   return (
     <div>
+      <Head>
+        {/* Override social media previews to use our custom image */}
+        <meta property="og:image" content="https://boktco.com/og-image.jpg" />
+        <meta property="twitter:image" content="https://boktco.com/og-image.jpg" />
+        <meta name="twitter:image" content="https://boktco.com/og-image.jpg" />
+        
+        {/* Prevent Instagram from using any other images */}
+        <meta name="robots" content="noimageindex" />
+      </Head>
       {/* Hero */}
       <section className="container-page py-8 sm:py-14 md:py-20 px-4 sm:px-6">
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight">

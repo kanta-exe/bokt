@@ -63,6 +63,7 @@ export default function EditModel({ model }: Props) {
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [isManagingPhotos, setIsManagingPhotos] = useState(false);
+  const [settingMainIdx, setSettingMainIdx] = useState<number | null>(null);
   const [isUploadingPhotos, setIsUploadingPhotos] = useState(false);
   const [isRemovingPhoto, setIsRemovingPhoto] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -583,6 +584,25 @@ export default function EditModel({ model }: Props) {
                   <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs font-medium px-2 py-1 rounded-full">
                     {index + 1}
                   </div>
+                  {/* Set as main */}
+                  <button
+                    onClick={async () => {
+                      setSettingMainIdx(index);
+                      try {
+                        await fetch('/api/admin/update-model', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ modelId: model.id, avatarUrl: photo })
+                        });
+                        window.location.reload();
+                      } finally {
+                        setSettingMainIdx(null);
+                      }
+                    }}
+                    className="absolute bottom-2 left-2 bg-black/70 text-white text-xs font-medium px-3 py-2 rounded hover:bg-black/80 transition-colors z-20"
+                  >
+                    {settingMainIdx === index ? 'Setting…' : 'Set as main'}
+                  </button>
                   
                                      {/* Remove button (only show when managing photos) */}
                    {isManagingPhotos && (
@@ -601,7 +621,7 @@ export default function EditModel({ model }: Props) {
                    )}
                   
                   {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200" />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 pointer-events-none z-10" />
                 </div>
               ))}
             </div>

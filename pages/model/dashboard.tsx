@@ -10,13 +10,40 @@ export default function ModelDashboard() {
   useEffect(() => { fetch("/api/model/me").then((r) => r.json()).then(setData); }, []);
   const p = data?.profile;
 
+  const [settingAvatar, setSettingAvatar] = useState<string | null>(null);
+  const setAsAvatar = async (url: string) => {
+    try {
+      setSettingAvatar(url);
+      const res = await fetch('/api/model/set-avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoUrl: url })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setData((d: any) => ({ ...d, profile: updated.profile }));
+      }
+    } finally {
+      setSettingAvatar(null);
+    }
+  };
+
   const renderPhotos = () => (
     <div>
       <div className="mb-3 text-sm text-neutral-600">Welcome, {p.displayName}</div>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6">
         {p.photos?.map((ph: any) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img key={ph.id} src={ph.url} alt="" className="aspect-[3/4] w-full rounded-md object-cover" />
+          <div key={ph.id} className="relative group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={ph.url} alt="" className="aspect-[3/4] w-full rounded-md object-cover" />
+            <button
+              onClick={() => setAsAvatar(ph.url)}
+              className="absolute bottom-2 left-2 right-2 rounded bg-black/70 text-white text-xs py-1 opacity-0 group-hover:opacity-100 transition"
+              disabled={settingAvatar === ph.url}
+            >
+              {p.avatarUrl === ph.url ? 'Main photo' : (settingAvatar === ph.url ? 'Setting…' : 'Set as main')}
+            </button>
+          </div>
         ))}
         {!p.photos?.length && <div className="text-sm text-neutral-500">No photos yet.</div>}
       </div>
