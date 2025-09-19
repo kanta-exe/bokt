@@ -15,16 +15,10 @@ export default function Home({ featured, results }: Props) {
     <div>
       <Head>
         {/* Override social media previews to use our custom image */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://boktco.com/" />
-        <meta property="og:title" content="BOKT – Book Your Talent Now" />
-        <meta property="og:description" content="Discover and book fashion models. Fast, direct, and transparent." />
-        <meta property="og:image" content="https://boktco.com/preview.png" />
-
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="BOKT – Book Your Talent Now" />
-        <meta name="twitter:description" content="Discover and book fashion models. Fast, direct, and transparent." />
-        <meta name="twitter:image" content="https://boktco.com/preview.png" />
+        <meta property="og:image" content="https://boktco.com/og-image.jpg" />
+        <meta property="twitter:image" content="https://boktco.com/og-image.jpg" />
+        <meta name="twitter:image" content="https://boktco.com/og-image.jpg" />
+        
         {/* Prevent Instagram from using any other images */}
         <meta name="robots" content="noimageindex" />
       </Head>

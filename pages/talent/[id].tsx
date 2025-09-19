@@ -48,39 +48,49 @@ export default function TalentProfile({ model }: { model: Model }) {
     <div className="container-page py-10">
       {/* Professional Photo Gallery */}
       <div className="mb-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* Mobile: swipeable slider */}
+        <div className="sm:hidden">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 -mx-4 px-4">
+            {model.photos.map((photo, index) => (
+              <div key={photo.id} className="relative snap-center shrink-0 w-[85%] rounded-lg overflow-hidden shadow-md">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo.url}
+                  alt={photo.caption ?? `${model.displayName} - Photo ${index + 1}`}
+                  className="w-full aspect-[3/4] object-cover"
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                />
+                <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">{index + 1}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tablet/Desktop: grid */}
+        <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {model.photos.map((photo, index) => (
-            <div 
-              key={photo.id} 
+            <div
+              key={photo.id}
               className={`relative group overflow-hidden rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-[1.02] ${
                 index === 0 ? 'sm:col-span-2 sm:row-span-2' : ''
               }`}
             >
-              {/* Main Image */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
-                src={photo.url} 
+              <img
+                src={photo.url}
                 alt={photo.caption ?? `${model.displayName} - Photo ${index + 1}`}
                 className={`w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 ${
                   index === 0 ? 'aspect-[4/5]' : 'aspect-[3/4]'
                 }`}
-                loading={index < 4 ? "eager" : "lazy"}
+                loading={index < 4 ? 'eager' : 'lazy'}
               />
-              
-              {/* Overlay on hover */}
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300" />
-              
-              {/* Photo number badge */}
               <div className="absolute top-3 right-3 bg-black bg-opacity-50 text-white text-xs font-medium px-2 py-1 rounded-full backdrop-blur-sm">
                 {index + 1}
               </div>
-              
-              
             </div>
           ))}
         </div>
-        
-
       </div>
 
       {/* Header & CTA */}
