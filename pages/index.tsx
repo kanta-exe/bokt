@@ -14,14 +14,16 @@ export default function Home({ featured, results }: Props) {
   return (
     <div>
       <Head>
-        {/* Force text-only preview. No image */}
+        {/* Override share preview for homepage */}
         <meta property="og:title" content="BOKT. Book Fashion Models" />
         <meta property="og:description" content="Book fashion models fast. Direct, transparent, and reliable." />
-        <meta property="og:image" content="" />
-        <meta name="twitter:card" content="summary" />
+        <meta property="og:image" content="/og-bokt.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="BOKT. Book Fashion Models" />
         <meta name="twitter:description" content="Book fashion models fast. Direct, transparent, and reliable." />
-        <meta name="twitter:image" content="" />
+        <meta name="twitter:image" content="/og-bokt.png" />
         <meta name="robots" content="noimageindex" />
       </Head>
       {/* Hero */}

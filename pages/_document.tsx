@@ -10,12 +10,16 @@ export default function Document() {
         <meta property="og:title" content="BOKT. Book Fashion Models" />
         <meta property="og:description" content="Book fashion models fast. Direct, transparent, and reliable." />
         <meta property="og:site_name" content="BOKT" />
+        <meta property="og:image" content="/og-bokt.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
 
         {/* Twitter */}
-        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://boktco.com/" />
         <meta property="twitter:title" content="BOKT. Book Fashion Models" />
         <meta property="twitter:description" content="Book fashion models fast. Direct, transparent, and reliable." />
+        <meta property="twitter:image" content="/og-bokt.png" />
 
         {/* Additional SEO */}
         <meta name="description" content="Book fashion models fast. Direct, transparent, and reliable." />
