@@ -14,12 +14,14 @@ export default function Home({ featured, results }: Props) {
   return (
     <div>
       <Head>
-        {/* Override social media previews to use our custom image */}
-        <meta property="og:image" content="https://boktco.com/og-image.jpg" />
-        <meta property="twitter:image" content="https://boktco.com/og-image.jpg" />
-        <meta name="twitter:image" content="https://boktco.com/og-image.jpg" />
-        
-        {/* Prevent Instagram from using any other images */}
+        {/* Force text-only preview. No image */}
+        <meta property="og:title" content="BOKT. Book Fashion Models" />
+        <meta property="og:description" content="Book fashion models fast. Direct, transparent, and reliable." />
+        <meta property="og:image" content="" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="BOKT. Book Fashion Models" />
+        <meta name="twitter:description" content="Book fashion models fast. Direct, transparent, and reliable." />
+        <meta name="twitter:image" content="" />
         <meta name="robots" content="noimageindex" />
       </Head>
       {/* Hero */}

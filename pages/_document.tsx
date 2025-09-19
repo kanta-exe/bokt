@@ -6,23 +6,21 @@ export default function Document() {
       <Head>
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://bokt.com/" />
-        <meta property="og:title" content="Bokt - Connect Models with Brands" />
-        <meta property="og:description" content="Discover talented models and connect with brands for professional photoshoots. Join the platform that brings creativity and business together." />
-        <meta property="og:image" content="https://bokt.com/og-image.jpg" />
-        <meta property="og:site_name" content="Bokt" />
+        <meta property="og:url" content="https://boktco.com/" />
+        <meta property="og:title" content="BOKT. Book Fashion Models" />
+        <meta property="og:description" content="Book fashion models fast. Direct, transparent, and reliable." />
+        <meta property="og:site_name" content="BOKT" />
 
         {/* Twitter */}
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content="https://bokt.com/" />
-        <meta property="twitter:title" content="Bokt - Connect Models with Brands" />
-        <meta property="twitter:description" content="Discover talented models and connect with brands for professional photoshoots. Join the platform that brings creativity and business together." />
-        <meta property="twitter:image" content="https://bokt.com/og-image.jpg" />
+        <meta property="twitter:card" content="summary" />
+        <meta property="twitter:url" content="https://boktco.com/" />
+        <meta property="twitter:title" content="BOKT. Book Fashion Models" />
+        <meta property="twitter:description" content="Book fashion models fast. Direct, transparent, and reliable." />
 
         {/* Additional SEO */}
-        <meta name="description" content="Discover talented models and connect with brands for professional photoshoots. Join the platform that brings creativity and business together." />
-        <meta name="keywords" content="models, modeling, brands, photoshoots, fashion, commercial, talent, booking" />
-        <meta name="author" content="Bokt" />
+        <meta name="description" content="Book fashion models fast. Direct, transparent, and reliable." />
+        <meta name="keywords" content="models, fashion models, booking, talents, commercial, runway" />
+        <meta name="author" content="BOKT" />
         
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
