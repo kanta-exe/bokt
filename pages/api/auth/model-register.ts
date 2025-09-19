@@ -54,7 +54,9 @@ const applicationSchema = z.object({
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   console.log('🚀 Model registration API called');
   console.log('Request method:', req.method);
-  console.log('Request headers:', req.headers);
+  console.log('User-Agent:', req.headers['user-agent']);
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('Content-Length:', req.headers['content-length']);
   
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method Not Allowed" });
@@ -62,31 +64,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     console.log('📝 Starting form data parsing...');
-    // Parse FormData
-    const formData = await new Promise<{ [key: string]: any }>((resolve, reject) => {
-      const form = new IncomingForm({
-        multiples: true,
-        keepExtensions: true,
-        maxFileSize: 50 * 1024 * 1024, // 50MB per file (Supabase limit)
-        maxTotalFileSize: 250 * 1024 * 1024, // 250MB total across all files (5 x 50MB)
-        allowEmptyFiles: false,
-      });
+    // Parse FormData with timeout for mobile
+    const formData = await Promise.race([
+      new Promise<{ [key: string]: any }>((resolve, reject) => {
+        const form = new IncomingForm({
+          multiples: true,
+          keepExtensions: true,
+          maxFileSize: 50 * 1024 * 1024, // 50MB per file (Supabase limit)
+          maxTotalFileSize: 250 * 1024 * 1024, // 250MB total across all files (5 x 50MB)
+          allowEmptyFiles: false,
+        });
 
-      form.parse(req, (err: any, fields: any, files: any) => {
-        if (err) {
-          console.error('❌ Formidable parsing error:', err);
-          // Formidable emits errors with httpCode when size limits are exceeded
-          if (err.httpCode === 413) {
-            return reject(Object.assign(new Error('Payload Too Large'), { httpCode: 413 }));
+        form.parse(req, (err: any, fields: any, files: any) => {
+          if (err) {
+            console.error('❌ Formidable parsing error:', err);
+            // Formidable emits errors with httpCode when size limits are exceeded
+            if (err.httpCode === 413) {
+              return reject(Object.assign(new Error('Payload Too Large'), { httpCode: 413 }));
+            }
+            return reject(err);
           }
-          return reject(err);
-        }
-        console.log('✅ Formidable parsed successfully');
-        console.log('Fields:', Object.keys(fields || {}));
-        console.log('Files:', Object.keys(files || {}));
-        resolve({ ...fields, ...files });
-      });
-    });
+          console.log('✅ Formidable parsed successfully');
+          console.log('Fields:', Object.keys(fields || {}));
+          console.log('Files:', Object.keys(files || {}));
+          resolve({ ...fields, ...files });
+        });
+      }),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('Form parsing timeout after 60 seconds')), 60000)
+      )
+    ]);
 
     console.log('📸 Processing photos...');
     console.log('Raw photos count:', formData.photos ? (Array.isArray(formData.photos) ? formData.photos.length : 1) : 0);

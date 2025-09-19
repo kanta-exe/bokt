@@ -470,6 +470,29 @@ export default function ModelApplication() {
     }
   };
 
+  const testMobileAPI = async () => {
+    console.log('📱 Testing mobile API connection...');
+    try {
+      // Test GET request
+      const getRes = await fetch("/api/mobile-test");
+      const getData = await getRes.json();
+      console.log('📱 GET test:', getData);
+      
+      // Test POST request
+      const postRes = await fetch("/api/mobile-test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ test: "mobile upload test" }),
+      });
+      const postData = await postRes.json();
+      console.log('📱 POST test:', postData);
+      
+      alert(`Mobile API Test:\nGET: ${getData.message}\nPOST: ${postData.message}`);
+    } catch (error) {
+      console.error('📱 Mobile test failed:', error);
+      alert(`Mobile test failed: ${error}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -479,7 +502,16 @@ export default function ModelApplication() {
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-foreground">Model Application</h1>
-              <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
+                <button 
+                  type="button"
+                  onClick={testMobileAPI}
+                  className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Test Mobile
+                </button>
+              </div>
             </div>
             <div className="mt-4">
               <div className="bg-muted rounded-full h-2">
