@@ -287,31 +287,27 @@ export default function ModelApplication() {
       return;
     }
     
-    // Compress images client-side in parallel to speed up uploads
-    // Use sequential processing on mobile to avoid memory issues
+    // Skip compression entirely on mobile to avoid issues
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    let compressedFiles: File[];
+    let processedFiles: File[];
     if (isMobile) {
-      console.log('📱 Using sequential compression on mobile');
-      compressedFiles = [];
-      for (const file of fileArray) {
-        const compressed = await compressImage(file);
-        compressedFiles.push(compressed);
-      }
+      console.log('📱 Mobile detected - skipping compression entirely');
+      processedFiles = fileArray; // Use original files on mobile
     } else {
-      compressedFiles = await Promise.all(
+      console.log('🖥️ Desktop detected - using compression');
+      processedFiles = await Promise.all(
         fileArray.map(file => compressImage(file))
       );
     }
 
-    // Validate file sizes after compression (consolidated)
+    // Validate file sizes after processing
     const currentTotalSize = form.photos.reduce((total, file) => total + file.size, 0);
-    const newTotalSize = currentTotalSize + compressedFiles.reduce((total, file) => total + file.size, 0);
+    const newTotalSize = currentTotalSize + processedFiles.reduce((total, file) => total + file.size, 0);
     const maxTotalSize = 250 * 1024 * 1024; // 250MB total
     
     // Check individual file sizes
-    const oversizedFiles = compressedFiles.filter(file => file.size > maxSize);
+    const oversizedFiles = processedFiles.filter(file => file.size > maxSize);
     if (oversizedFiles.length > 0) {
       setFieldError('photos', `Photo(s) ${oversizedFiles.map((_, i) => i + 1).join(', ')} are too large. Maximum file size is 50MB per photo.`);
       return;
@@ -323,7 +319,7 @@ export default function ModelApplication() {
       return;
     }
     
-    updateForm({ photos: [...form.photos, ...compressedFiles] });
+    updateForm({ photos: [...form.photos, ...processedFiles] });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -383,11 +379,10 @@ export default function ModelApplication() {
       formData.append('bio', form.bio);
       formData.append('termsAccepted', form.termsAccepted.toString());
       
-      // Append photos - ensure proper handling for mobile
+      // Append photos - mobile-friendly approach
       form.photos.forEach((photo, index) => {
-        // Create a fresh File object to avoid mobile corruption issues
-        const freshFile = new File([photo], photo.name, { type: photo.type });
-        formData.append(`photos`, freshFile);
+        // For mobile, append the original file directly without creating new File objects
+        formData.append(`photos`, photo, photo.name);
       });
 
       // Add timeout for mobile devices (2 minutes)
@@ -470,29 +465,6 @@ export default function ModelApplication() {
     }
   };
 
-  const testMobileAPI = async () => {
-    console.log('📱 Testing mobile API connection...');
-    try {
-      // Test GET request
-      const getRes = await fetch("/api/mobile-test");
-      const getData = await getRes.json();
-      console.log('📱 GET test:', getData);
-      
-      // Test POST request
-      const postRes = await fetch("/api/mobile-test", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ test: "mobile upload test" }),
-      });
-      const postData = await postRes.json();
-      console.log('📱 POST test:', postData);
-      
-      alert(`Mobile API Test:\nGET: ${getData.message}\nPOST: ${postData.message}`);
-    } catch (error) {
-      console.error('📱 Mobile test failed:', error);
-      alert(`Mobile test failed: ${error}`);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background py-12">
@@ -502,16 +474,7 @@ export default function ModelApplication() {
           <div className="px-6 py-4 border-b border-border">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-foreground">Model Application</h1>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
-                <button 
-                  type="button"
-                  onClick={testMobileAPI}
-                  className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
-                >
-                  Test Mobile
-                </button>
-              </div>
+              <span className="text-sm text-muted-foreground">Step {currentStep} of 4</span>
             </div>
             <div className="mt-4">
               <div className="bg-muted rounded-full h-2">
