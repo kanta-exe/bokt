@@ -355,7 +355,7 @@ export default function ModelApplication() {
     });
 
     try {
-      // Use FormData for both mobile and desktop, but with mobile optimizations
+      // Use FormData for desktop. On mobile, upload photos directly to Supabase first
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('email', form.email);
@@ -381,15 +381,72 @@ export default function ModelApplication() {
       formData.append('bio', form.bio);
       formData.append('termsAccepted', form.termsAccepted.toString());
       
-      // Append photos - optimized for mobile
-      form.photos.forEach((photo, index) => {
-        // Use simple append for mobile compatibility
-        formData.append(`photos`, photo);
+      // Detect mobile
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // 1) Upload to Supabase directly from client
+        const { supabase } = await import('@/lib/supabase');
+        const uploadOne = async (file: File, index: number) => {
+          const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+          const path = `models/mobile_${Date.now()}_${index}.${ext}`;
+          const { data, error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600' });
+          if (error) throw error;
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
+          return urlData.publicUrl;
+        };
+
+        const photoUrls: string[] = [];
+        for (let i = 0; i < form.photos.length; i++) {
+          const url = await uploadOne(form.photos[i], i);
+          photoUrls.push(url);
+        }
+
+        // 2) Submit JSON with URLs
+        const simpleData = {
+          name: form.name,
+          email: form.email,
+          nickname: form.nickname,
+          location: form.location,
+          instagramHandle: form.instagramHandle,
+          gender: form.gender,
+          heightCm: form.heightCm,
+          shirtSize: form.shirtSize,
+          pantSize: form.pantSize,
+          shoesSize: form.shoesSize,
+          bustCm: form.bustCm,
+          waistCm: form.waistCm,
+          age: form.age,
+          categories: form.categories,
+          modelingExperience: form.modelingExperience,
+          bio: form.bio,
+          termsAccepted: form.termsAccepted,
+          photoUrls,
+        };
+
+        const res = await fetch('/api/auth/model-register-urls', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(simpleData),
+        });
+
+        if (res.ok) {
+          window.location.href = "/auth/application-success";
+          return;
+        }
+
+        const err = await res.json().catch(() => ({}));
+        setFieldError('general', err.error || 'Failed to submit application');
+        return;
+      }
+
+      // Desktop path: include files in multipart
+      form.photos.forEach((photo) => {
+        formData.append('photos', photo);
       });
 
-      // Add timeout (3 minutes for mobile, 2 for desktop)
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      const timeoutMs = isMobile ? 180000 : 120000; // 3 min mobile, 2 min desktop
+      // Add timeout (2 minutes desktop)
+      const timeoutMs = 120000;
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
