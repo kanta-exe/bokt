@@ -434,10 +434,23 @@ export default function ModelApplication() {
         const uploadOne = async (file: File, index: number) => {
           const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
           const path = `models/mobile_${Date.now()}_${index}.${ext}`;
-          const { data, error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
-          if (error) throw error;
-          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
-          return urlData.publicUrl;
+          let lastError: any = null;
+          for (let attempt = 1; attempt <= 2; attempt++) {
+            const { error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
+            if (!error) {
+              const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
+              return urlData.publicUrl;
+            }
+            const msg = (error?.message || '').toLowerCase();
+            if (msg.includes('exists')) {
+              const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
+              return urlData.publicUrl;
+            }
+            lastError = error;
+            // small delay before retry
+            await new Promise(r => setTimeout(r, 500));
+          }
+          throw lastError || new Error('Upload failed');
         };
 
         const photoUrls: string[] = [];
@@ -508,7 +521,7 @@ export default function ModelApplication() {
         hasPhotos: formData.has('photos'),
         photoCount: form.photos.length
       });
-      
+
       const res = await fetch("/api/auth/model-register", {
         method: "POST",
         body: formData,
@@ -857,9 +870,9 @@ export default function ModelApplication() {
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
                   />
-                  <p className="mt-1 text-xs text-muted-foreground">
+                                     <p className="mt-1 text-xs text-muted-foreground">
                     📱 Mobile: Max 10MB per photo, 50MB total | 🖥️ Desktop: Max 50MB per photo, 250MB total
-                  </p>
+                   </p>
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
                   )}
@@ -914,7 +927,7 @@ export default function ModelApplication() {
                       required
                     />
                     <span className="ml-3 text-sm text-foreground">
-                      I agree to the <Link href="/terms" className="text-accent underline">Terms of Service</Link> and 
+                      I agree to the <Link href="/terms" className="text-accent underline" target="_blank" rel="noopener noreferrer">Terms of Service</Link> and 
                       understand that my application will be reviewed before approval. *
                     </span>
                   </label>
