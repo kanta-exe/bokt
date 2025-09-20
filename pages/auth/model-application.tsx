@@ -266,6 +266,42 @@ export default function ModelApplication() {
     }
   };
 
+  // Mobile-only: try to reduce files > 10MB to <= 10MB using JPEG with step-down quality
+  const compressIfNeededMobile = async (file: File): Promise<File> => {
+    const TEN_MB = 10 * 1024 * 1024;
+    try {
+      if (file.size <= TEN_MB) return file;
+      // Use canvas to downscale long edge to 2000px and step quality 0.8 → 0.7 → 0.6
+      const imageBitmap = await createImageBitmap(file);
+      const maxDim = 2000;
+      const scale = Math.min(1, maxDim / Math.max(imageBitmap.width, imageBitmap.height));
+      const targetW = Math.round(imageBitmap.width * scale);
+      const targetH = Math.round(imageBitmap.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(imageBitmap, 0, 0, targetW, targetH);
+      const qualities = [0.8, 0.7, 0.6];
+      for (const q of qualities) {
+        const blob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', q));
+        if (!blob) continue;
+        if (blob.size <= TEN_MB) {
+          return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+        }
+      }
+      // Return the smallest attempt even if still >10MB
+      const fallbackBlob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.6));
+      if (fallbackBlob) {
+        return new File([fallbackBlob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+      }
+      return file;
+    } catch {
+      return file;
+    }
+  };
+
   const handlePhotoUpload = async (files: FileList | null) => {
     if (!files) return;
     
@@ -279,8 +315,8 @@ export default function ModelApplication() {
       return;
     }
 
-    // Validate file types
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    // Validate file types (include iOS HEIC/HEIF)
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
     const invalidFiles = fileArray.filter(file => !validTypes.includes(file.type));
     
     if (invalidFiles.length > 0) {
@@ -385,21 +421,36 @@ export default function ModelApplication() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // 1) Upload to Supabase directly from client
+        // 1) Prepare files: compress huge files down to <=10MB when possible
+        const prepared: File[] = [];
+        for (let i = 0; i < form.photos.length; i++) {
+          const f = form.photos[i];
+          const smaller = await compressIfNeededMobile(f);
+          prepared.push(smaller);
+        }
+
+        // 2) Upload to Supabase directly from client
         const { supabase } = await import('@/lib/supabase');
         const uploadOne = async (file: File, index: number) => {
           const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
           const path = `models/mobile_${Date.now()}_${index}.${ext}`;
-          const { data, error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600' });
+          const { data, error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });
           if (error) throw error;
           const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path);
           return urlData.publicUrl;
         };
 
         const photoUrls: string[] = [];
-        for (let i = 0; i < form.photos.length; i++) {
-          const url = await uploadOne(form.photos[i], i);
-          photoUrls.push(url);
+        for (let i = 0; i < prepared.length; i++) {
+          try {
+            const url = await uploadOne(prepared[i], i);
+            photoUrls.push(url);
+          } catch (uploadErr: any) {
+            console.error('Supabase upload error:', uploadErr);
+            setFieldError('photos', uploadErr?.message || 'Upload failed. Please try a smaller photo or different connection.');
+            setLoading(false);
+            return;
+          }
         }
 
         // 2) Submit JSON with URLs
@@ -801,7 +852,7 @@ export default function ModelApplication() {
                   <input
                     type="file"
                     multiple
-                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    accept="image/*"
                     className="mt-1 block w-full rounded-md border border-border bg-muted text-foreground shadow-sm focus:border-accent focus:ring-accent focus:bg-background"
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
