@@ -201,6 +201,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.log(`📸 Processing ${validatedData.photos.length} photos for user ${user.id}`);
       const fs = await import('fs');
       const crypto = await import('crypto');
+      // Create a safe slug from the model name for filename readability
+      const baseName = (validatedData.nickname || validatedData.name || 'model').toLowerCase();
+      const slug = baseName.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 50);
 
       const uploadPromises = validatedData.photos.map(async (photo: any, i: number) => {
         if (!photo?.filepath) {
@@ -214,7 +217,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           // Deterministic filename using content hash to avoid duplicates; keep original extension
           const originalExt = (photo.originalFilename && photo.originalFilename.includes('.')) ? photo.originalFilename.split('.').pop() : 'jpg';
           const hash = crypto.createHash('sha1').update(fileBuffer).digest('hex').slice(0, 12);
-          const fileName = `model_${modelProfile.id}_${i}_${hash}.${originalExt}`;
+          const fileName = `${slug}_${modelProfile.id}_${i}_${hash}.${originalExt}`;
 
           const supabaseResult = await uploadBufferToSupabase(fileBuffer, fileName, 'models');
           if (supabaseResult.success) {

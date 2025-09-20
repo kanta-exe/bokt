@@ -431,9 +431,10 @@ export default function ModelApplication() {
 
         // 2) Upload to Supabase directly from client
         const { supabase } = await import('@/lib/supabase');
+        const safeName = (form.nickname || form.name || 'model').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 50);
         const uploadOne = async (file: File, index: number) => {
           const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-          const path = `models/mobile_${Date.now()}_${index}.${ext}`;
+          const path = `models/${safeName}_mobile_${Date.now()}_${index}.${ext}`;
           let lastError: any = null;
           for (let attempt = 1; attempt <= 2; attempt++) {
             const { error } = await supabase.storage.from('photos').upload(path, file, { upsert: false, cacheControl: '3600', contentType: file.type || undefined });

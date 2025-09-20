@@ -140,28 +140,38 @@ export default function EditModel({ model }: Props) {
     setMessage(null);
 
     try {
-      const formData = new FormData();
-      formData.append('modelId', model.id);
-      
-      Array.from(files).forEach((file) => {
-        formData.append('photos', file);
-      });
+      const { supabase } = await import('@/lib/supabase');
+      const slug = (model.nickname || model.name || 'model').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0,50);
+      const urls: string[] = [];
 
-      const response = await fetch(`/api/admin/manage-photos?modelId=${model.id}`, {
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+        const path = `models/${slug}_admin_${Date.now()}_${i}.${ext}`;
+        const { error } = await supabase.storage.from('photos').upload(path, f, { upsert: false, cacheControl: '3600', contentType: f.type || undefined });
+        if (error) {
+          setMessage({ type: 'error', text: error.message || 'Upload failed' });
+          setIsUploadingPhotos(false);
+          return;
+        }
+        const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(path);
+        urls.push(publicUrl);
+      }
+
+      const resp = await fetch('/api/admin/save-photo-urls', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelId: model.id, urls }),
       });
 
-      if (response.ok) {
-        const result = await response.json();
+      const result = await resp.json();
+      if (resp.ok) {
         setMessage({ type: 'success', text: result.message });
-        // Refresh the page to show updated photos
         window.location.reload();
       } else {
-        const error = await response.json();
-        setMessage({ type: 'error', text: error.error || 'Failed to add photos' });
+        setMessage({ type: 'error', text: result.error || 'Failed to save photos' });
       }
-    } catch (error) {
+    } catch (e) {
       setMessage({ type: 'error', text: 'An error occurred while uploading photos' });
     } finally {
       setIsUploadingPhotos(false);
