@@ -870,9 +870,7 @@ export default function ModelApplication() {
                     onChange={(e) => handlePhotoUpload(e.target.files)}
                     required
                   />
-                                     <p className="mt-1 text-xs text-muted-foreground">
-                    📱 Mobile: Max 10MB per photo, 50MB total | 🖥️ Desktop: Max 50MB per photo, 250MB total
-                   </p>
+                  
                   {getFieldError('photos') && (
                     <p className="text-sm text-red-600 mt-1">{getFieldError('photos')}</p>
                   )}
