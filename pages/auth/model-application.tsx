@@ -9,6 +9,7 @@ interface ApplicationForm {
   // Basic Info
   name: string;
   email: string;
+  phone: string;
   nickname: string;
   location: string;
   instagramHandle: string;
@@ -45,6 +46,7 @@ export default function ModelApplication() {
   const [form, setForm] = useState<ApplicationForm>({
     name: "",
     email: "",
+    phone: "",
     nickname: "",
     location: "",
     instagramHandle: "",
@@ -205,6 +207,7 @@ export default function ModelApplication() {
     const complete = !!(
       form.name && 
       form.email && 
+      form.phone &&
       form.location && 
       form.instagramHandle &&
       form.gender && 
@@ -633,6 +636,15 @@ export default function ModelApplication() {
                   value={form.email}
                   onChange={(e) => updateForm({ email: e.target.value })}
                   error={getFieldError('email')}
+                  required
+                />
+                
+                <InputField
+                  label="Phone Number"
+                  name="phone"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => updateForm({ phone: e.target.value })}
                   required
                 />
                 
