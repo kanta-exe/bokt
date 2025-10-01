@@ -19,7 +19,7 @@ const applicationSchema = z.object({
   // Basic Info
   name: z.string().min(1),
   email: z.string().email(),
-  phone: z.string().min(1),
+  phone: z.string().min(1, "Phone number is required"),
   nickname: z.string().optional(),
   location: z.string().min(1),
   instagramHandle: z.string().min(1),

@@ -103,6 +103,10 @@ export default function ModelApplication() {
           setFieldError('email', 'Please enter a valid email address');
           isValid = false;
         }
+        if (!form.phone.trim()) {
+          setFieldError('phone', 'Phone number is required');
+          isValid = false;
+        }
         if (!form.location.trim()) {
           setFieldError('location', 'City is required');
           isValid = false;
@@ -647,6 +651,7 @@ export default function ModelApplication() {
                   type="tel"
                   value={form.phone}
                   onChange={(e) => updateForm({ phone: e.target.value })}
+                  error={getFieldError('phone')}
                   required
                 />
                 

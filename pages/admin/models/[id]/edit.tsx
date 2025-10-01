@@ -9,7 +9,7 @@ interface Model {
   id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone: string | null;
   nickname: string;
   location: string;
   instagramHandle: string;
@@ -268,7 +268,7 @@ export default function EditModel({ model }: Props) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">Phone</label>
-                  <p className="text-foreground">{model.phone || 'Not provided'}</p>
+                  <p className="text-foreground">{model.phone || 'Not provided (old application)'}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-1">Nickname</label>
@@ -739,7 +739,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       id: modelProfile.id,
       name: modelProfile.user.name || '',
       email: modelProfile.user.email,
-      phone: modelProfile.user.phone || undefined,
+      phone: modelProfile.user.phone || null,
       nickname: modelProfile.displayName || modelProfile.user.name || '',
       location: modelProfile.location || '',
       instagramHandle: modelProfile.instagramHandle || '',
