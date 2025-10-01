@@ -10,6 +10,7 @@ interface PendingModel {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   nickname?: string;
   location: string;
   instagramHandle: string;
@@ -150,13 +151,18 @@ export default function AdminPage({ pending }: { pending: PendingModel[] }) {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                    <p className="text-foreground">{selectedModel.phone || 'Not provided'}</p>
+                  </div>
+                  <div>
                     <label className="text-sm font-medium text-muted-foreground">Location</label>
                     <p className="text-foreground">{selectedModel.location}</p>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Instagram</label>
-                    <p className="text-foreground">{selectedModel.instagramHandle}</p>
-                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Instagram</label>
+                  <p className="text-foreground">{selectedModel.instagramHandle}</p>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -389,6 +395,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
               id: true,
               name: true,
               email: true,
+              phone: true,
               createdAt: true
             }
           },
@@ -419,6 +426,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
         id: model.id,
         name: model.user.name || 'Unknown',
         email: model.user.email,
+        phone: model.user.phone || undefined,
         nickname: model.displayName || undefined,
         location: model.location || 'Unknown',
         instagramHandle: model.instagramHandle || 'N/A',

@@ -8,6 +8,7 @@ const schema = z.object({
   // Basic Info
   name: z.string().min(1),
   email: z.string().email(),
+  phone: z.string().min(1),
   nickname: z.string().optional(),
   location: z.string().min(1),
   instagramHandle: z.string().min(1),
@@ -67,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         email: parsed.email,
         name: parsed.name,
+        phone: parsed.phone,
         passwordHash,
         role: Role.MODEL,
       },

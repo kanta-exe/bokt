@@ -19,6 +19,7 @@ const applicationSchema = z.object({
   // Basic Info
   name: z.string().min(1),
   email: z.string().email(),
+  phone: z.string().min(1),
   nickname: z.string().optional(),
   location: z.string().min(1),
   instagramHandle: z.string().min(1),
@@ -122,6 +123,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const data = {
       name: Array.isArray(formData.name) ? formData.name[0] : formData.name,
       email: Array.isArray(formData.email) ? formData.email[0] : formData.email,
+      phone: Array.isArray(formData.phone) ? formData.phone[0] : formData.phone,
       nickname: Array.isArray(formData.nickname) ? formData.nickname[0] : formData.nickname,
       location: Array.isArray(formData.location) ? formData.location[0] : formData.location,
       instagramHandle: Array.isArray(formData.instagramHandle) ? formData.instagramHandle[0] : formData.instagramHandle,
@@ -167,6 +169,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: {
         email: validatedData.email,
         name: validatedData.name,
+        phone: validatedData.phone,
         passwordHash,
         role: Role.MODEL,
       },

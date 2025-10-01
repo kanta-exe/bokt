@@ -398,6 +398,7 @@ export default function ModelApplication() {
       const formData = new FormData();
       formData.append('name', form.name);
       formData.append('email', form.email);
+      formData.append('phone', form.phone);
       formData.append('nickname', form.nickname);
       formData.append('location', form.location);
       formData.append('instagramHandle', form.instagramHandle);
@@ -474,6 +475,7 @@ export default function ModelApplication() {
         const simpleData = {
           name: form.name,
           email: form.email,
+          phone: form.phone,
           nickname: form.nickname,
           location: form.location,
           instagramHandle: form.instagramHandle,
