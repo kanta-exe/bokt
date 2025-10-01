@@ -70,6 +70,15 @@ input, textarea, select {
   user-select: text;
 }
 
+/* Fix mobile select dropdown issues */
+select {
+  -webkit-appearance: menulist;
+  -moz-appearance: menulist;
+  appearance: menulist;
+  touch-action: manipulation;
+  pointer-events: auto;
+}
+
 /* Remove default focus outlines on mobile */
 input:focus, textarea:focus, select:focus, button:focus {
   outline: none;

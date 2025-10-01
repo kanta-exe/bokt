@@ -196,6 +196,8 @@ export default function ModelApplication() {
       // If validation passes, move to next step
       setCurrentStep(prev => Math.min(prev + 1, 4));
       clearErrors();
+      // Scroll to top of the form smoothly
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       console.log('Validation failed, errors should be set');
     }
@@ -205,6 +207,8 @@ export default function ModelApplication() {
   const prevStep = () => {
     setCurrentStep(prev => Math.max(prev - 1, 1));
     clearErrors();
+    // Scroll to top of the form smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const isFormComplete = (): boolean => {
